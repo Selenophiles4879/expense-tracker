@@ -19,6 +19,18 @@ const usersController = {
       throw new Error("User already exists");
     }
 
+    // 2.NEW: Check for Duplicate Username (Fixes E11000)
+    const usernameExists = await User.findOne({ username });
+    if (usernameExists) {
+      // This is the clean, custom message the user will see
+      throw new Error("The username is already taken. Please choose another."); 
+    }
+    
+    // 3. Username length check (Keep your existing validation)
+    if (username.length < 3) {
+        throw new Error("Username must be at least 3 characters long");
+    }
+    
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
 
