@@ -98,7 +98,7 @@ const usersController = {
 
     // 3. Create the reset URL
     // This must match your frontend route
-    const resetURL = `process.env.FRONTEND_URL/reset-password/${resetToken}`;
+    const resetURL = `process.env.FRONTEND_URL/users/reset-password/${resetToken}`;
 
     // 4. Send the email
     const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email.`;
