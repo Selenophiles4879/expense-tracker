@@ -1,0 +1,11 @@
+# Dependency folder
+node_modules/
+
+# Secret environment variables
+.env
+
+# Log files
+*.log
+
+#data folder ignore
+data/
