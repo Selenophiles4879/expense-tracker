@@ -19,7 +19,7 @@ mongoose
 
 // Allow your specific Netlify frontend to access the backend
 const corsOptions = {
-  origin: 'https://clinquant-bubblegum-f821f0.netlify.app', // Your actual Frontend URL
+  origin: 'https://expensetracker4879.netlify.app', // <--- NEW // Your actual Frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true // Allow cookies if you use them
