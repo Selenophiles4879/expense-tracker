@@ -17,9 +17,12 @@ mongoose
   .then(() => console.log("DB Connected"))
   .catch((e) => console.log(e));
 
-//! Cors config
+// Allow your specific Netlify frontend to access the backend
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: 'https://clinquant-bubblegum-f821f0.netlify.app', // Your actual Frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true // Allow cookies if you use them
 };
 app.use(cors(corsOptions));
 //!Middlewares
