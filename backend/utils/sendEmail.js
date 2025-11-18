@@ -5,7 +5,9 @@ const sendEmail = async (options) => {
 
   // 1. Create a transporter
   const transporter = nodemailer.createTransport({
-    service: "Gmail",
+   host: process.env.SMTP_HOST, 
+    port: process.env.SMTP_PORT,
+    secure: true, // Use 'secure: true' for port 465, or 'false' for 587
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
@@ -14,7 +16,7 @@ const sendEmail = async (options) => {
 
   // 2. Define the email options
   const mailOptions = {
-    from: "Expense Tracker <process.env.EMAIL_USER>",
+    from: "Expense Tracker <process.env.SMTP_USER>",
     to: options.email,
     subject: options.subject,
     text: options.message,
