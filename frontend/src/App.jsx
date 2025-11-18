@@ -1,10 +1,10 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HeroSection from "./components/Home/HomePage";
-import PublicNavbar from "./components/Navbar/PublicNavBar";
+import PublicNavbar from "./components/NavBar/PublicNavBar";
 import LoginForm from "./components/Users/Login";
 import { useSelector } from "react-redux";
 import RegistrationForm from "./components/Users/Register";
-import PrivateNavbar from "./components/Navbar/PrivateNavBar";
+import PrivateNavbar from "./components/NavBar/PrivateNavBar";
 import AddCategory from "./components/Category/AddCategory";
 import CategoriesList from "./components/Category/CategoriesList";
 import UpdateCategory from "./components/Category/UpdateCategory";
