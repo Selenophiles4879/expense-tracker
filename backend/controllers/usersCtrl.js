@@ -52,7 +52,7 @@ const usersController = {
       throw new Error("Invalid credentials");
     }
 
-    const token = jwt.sign({ id: user._id }, "masynctechKey", {
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
 
@@ -86,7 +86,7 @@ const usersController = {
 
     // 3. Create the reset URL
     // This must match your frontend route
-    const resetURL = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetURL = `process.env.FRONTEND_URL/reset-password/${resetToken}`;
 
     // 4. Send the email
     const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email.`;
