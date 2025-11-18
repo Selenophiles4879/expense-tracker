@@ -14,7 +14,7 @@ const sendEmail = async (options) => {
 
   // 2. Define the email options
   const mailOptions = {
-    from: "Your App Name <your-email@gmail.com>",
+    from: "Expense Tracker <process.env.EMAIL_USER>",
     to: options.email,
     subject: options.subject,
     text: options.message,
