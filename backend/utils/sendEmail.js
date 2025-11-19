@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+/* const nodemailer = require("nodemailer");
 const sendEmail = async (options) => {
   try {
     // 1. Create a transporter
@@ -32,6 +32,55 @@ const sendEmail = async (options) => {
     console.error("Email sending failed:", error.message);
 
     // Prevent server crash
+    throw new Error("Email could not be sent. Please try again later.");
+  }
+};
+
+module.exports = sendEmail;
+*/
+
+// backend/utils/sendEmail.js
+
+const axios = require("axios");
+
+const sendEmail = async (options) => {
+  try {
+    // Prepare email payload for Brevo
+    const payload = {
+      sender: {
+        name: "Expense Tracker",
+        email: process.env.FROM_EMAIL, // must be a verified Brevo sender
+      },
+      to: [
+        {
+          email: options.email,
+        },
+      ],
+      subject: options.subject,
+      textContent: options.message, // plain text message
+      // htmlContent: options.html || null // optional
+    };
+
+    // Send using Brevo Email API
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": process.env.BREVO_API_KEY,
+        },
+      }
+    );
+
+    console.log("Email sent via Brevo API:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Email sending failed:",
+      error.response?.data || error.message
+    );
+
     throw new Error("Email could not be sent. Please try again later.");
   }
 };
