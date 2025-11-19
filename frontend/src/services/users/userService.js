@@ -3,7 +3,23 @@ import { BASE_URL } from "../../utils/url";
 import { getUserFromStorage } from "../../utils/getUserFromStorage";
 
 // Always get fresh token for every request
-const getToken = () => getUserFromStorage();
+//const getToken = () => getUserFromStorage();
+// Always get fresh token for every request
+const getToken = () => {
+  // getUserFromStorage might return a stringified JSON or object - handle both
+  const stored = getUserFromStorage();
+  if (!stored) return null;
+
+  try {
+    const parsed = typeof stored === "string" ? JSON.parse(stored) : stored;
+    // your login returns { token, user, message } so token is in parsed.token
+    return parsed?.token || null;
+  } catch (err) {
+    console.warn("Failed to parse user from storage", err);
+    return null;
+  }
+};
+
 
 // ---------------------- LOGIN ----------------------
 export const loginAPI = async ({ email, password }) => {
