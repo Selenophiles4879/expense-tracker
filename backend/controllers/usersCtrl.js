@@ -81,26 +81,30 @@ const usersController = {
 
 // --- ADD THIS NEW FUNCTION ---
   //! FORGOT PASSWORD
+    //! FORGOT PASSWORD
   forgotPassword: asyncHandler(async (req, res) => {
-    // 1. Find the user by email
     const { email } = req.body;
-    const user = await User.findOne({ email });
 
-    // (Security) Always send a success response, even if user not found
-    if (!user) {
-      res.json({ message: "If your email is registered, you will receive a reset link." });
-      return;
+    if (!email) {
+      // Bad request from client
+      res.status(400);
+      throw new Error("Please provide an email address");
     }
 
-    // 2. Generate the reset token (this also saves the hashed version to the user)
+    const user = await User.findOne({ email });
+
+    // Security: always respond the same way to avoid leaking valid emails
+    if (!user) {
+      return res.json({ message: "If your email is registered, you will receive a reset link." });
+    }
+
+    // Generate token and persist hashed token to DB via model method
     const resetToken = user.createPasswordResetToken();
     await user.save({ validateBeforeSave: false });
 
-    // 3. Create the reset URL
-    // This must match your frontend route
-    const resetURL = `process.env.FRONTEND_URL/users/reset-password/${resetToken}`;
+    // Interpolate the real FRONTEND URL from env (note the backticks)
+    const resetURL = `${process.env.FRONTEND_URL}/users/reset-password/${resetToken}`;
 
-    // 4. Send the email
     const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email.`;
 
     try {
@@ -110,12 +114,15 @@ const usersController = {
         message,
       });
 
-      res.json({ message: "If your email is registered, you will receive a reset link." });
+      return res.json({ message: "If your email is registered, you will receive a reset link." });
     } catch (err) {
+      // rollback token fields on failure to send email
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
       await user.save({ validateBeforeSave: false });
 
+      console.error("Error sending reset email:", err);
+      res.status(500);
       throw new Error("There was an error sending the email. Try again later.");
     }
   }),
