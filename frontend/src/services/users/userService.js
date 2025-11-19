@@ -19,6 +19,8 @@ const getToken = () => {
     return null;
   }
 };
+const token = getToken();
+if (!token) throw new Error("Not authenticated");
 
 
 // ---------------------- LOGIN ----------------------
