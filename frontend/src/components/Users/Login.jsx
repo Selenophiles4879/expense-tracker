@@ -25,7 +25,7 @@ const LoginForm = () => {
   //Dispatch
   const dispatch = useDispatch();
   // Mutation
-  const { mutateAsync, isPending, isError, error, isSuccess } = useMutation({
+  const { mutateAsync, isLoading, isError, error, isSuccess } = useMutation({
     mutationFn: loginAPI,
     mutationKey: ["login"],
   });
