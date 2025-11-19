@@ -79,7 +79,7 @@ function App() {
 
         {/* --- ADD THESE NEW ROUTES --- */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/users/reset-password/:token" element={<ResetPassword />} />
 
       </Routes>
     </BrowserRouter>
