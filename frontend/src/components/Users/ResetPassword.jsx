@@ -19,6 +19,7 @@ const validationSchema = Yup.object({
 const ResetPassword = () => {
   const navigate = useNavigate();
   const { token } = useParams(); // Get token from URL
+  console.log("Reset token:",token);
 
   const { mutateAsync, isPending, isError, error, isSuccess, data } =
     useMutation({
