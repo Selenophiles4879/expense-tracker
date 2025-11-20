@@ -28,12 +28,12 @@ const usersController = {
     }
 
     // Check for Duplicate Username
-    const usernameExists = await User.findOne({ username });
+   /* const usernameExists = await User.findOne({ username });
     if (usernameExists) {
         // Set the status code explicitly
         res.status(409); 
         throw new Error("The username is already taken. Please choose another."); 
-    }
+    }*/
     
     // 3. Username length check (Keep your existing validation)
     if (username.length < 3) {
