@@ -19,11 +19,20 @@ const usersController = {
       throw new Error("User already exists");
     }
 
-    // 2.NEW: Check for Duplicate Username (Fixes E11000)
+    / Check for Duplicate Email
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+        // Set the status code explicitly
+        res.status(409); 
+        throw new Error("This email is already registered.");
+    }
+
+    // Check for Duplicate Username
     const usernameExists = await User.findOne({ username });
     if (usernameExists) {
-      // This is the clean, custom message the user will see
-      throw new Error("The username is already taken. Please choose another."); 
+        // Set the status code explicitly
+        res.status(409); 
+        throw new Error("The username is already taken. Please choose another."); 
     }
     
     // 3. Username length check (Keep your existing validation)
