@@ -195,26 +195,55 @@ const usersController = {
   }),
 
   //! UPDATE PROFILE
-  updateUserProfile: asyncHandler(async (req, res) => {
+updateUserProfile: asyncHandler(async (req, res) => {
     const { email, username } = req.body;
+    const userId = req.user.id;
 
-    const updated = await User.findByIdAndUpdate(
-      req.user.id,
-      { email, username },
-      { new: true }
-    );
+    // 1. Check if the user exists
+    let user = await User.findById(userId);
 
-    if (!updated) {
-      throw new Error("User not found");
+    if (!user) {
+        throw new Error("User not found");
+    }
+    
+    // --- NEW: Pre-validation to prevent E11000 error ---
+
+    // 2. Check for duplicate email (excluding the current user)
+    if (email && email !== user.email) {
+        const emailExists = await User.findOne({ email });
+        if (emailExists) {
+            // Throw an error that will be caught by asyncHandler/error middleware
+            res.status(409); // 409 Conflict
+            throw new Error("This email is already taken by another user.");
+        }
     }
 
+    // 3. Check for duplicate username (excluding the current user)
+    if (username && username !== user.username) {
+        const usernameExists = await User.findOne({ username });
+        if (usernameExists) {
+            // Throw an error that will be caught by asyncHandler/error middleware
+            res.status(409); // 409 Conflict
+            throw new Error("This username is already taken by another user.");
+        }
+    }
+    
+    // --- End of new checks ---
+
+    // 4. Safely apply and save the updates
+    // Use the document's save method instead of findByIdAndUpdate to ensure validation runs
+    if (email) user.email = email;
+    if (username) user.username = username;
+    
+    const updatedUser = await user.save(); 
+
     res.json({
-      message: "Profile updated",
-      user: {
-        id: updated._id,
-        username: updated.username,
-        email: updated.email,
-      },
+        message: "Profile updated successfully",
+        user: {
+            id: updatedUser._id,
+            username: updatedUser.username,
+            email: updatedUser.email,
+        },
     });
   }),
 };
