@@ -19,7 +19,7 @@ const usersController = {
       throw new Error("User already exists");
     }
 
-    / Check for Duplicate Email
+    // Check for Duplicate Email
     const emailExists = await User.findOne({ email });
     if (emailExists) {
         // Set the status code explicitly
