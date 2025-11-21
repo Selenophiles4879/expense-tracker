@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
  * @param {object} props
  * @param {boolean} props.isLoggedIn - True if the user is authenticated.
  */
-const HeroSection1 = ({ isLoggedIn }) => { 
+const HeroSection = ({ isLoggedIn }) => { 
   return (
     <>
       <div className="bg-gradient-to-r from-green-400 to-blue-500 text-white py-20 px-4">
@@ -153,4 +153,4 @@ const HeroSection1 = ({ isLoggedIn }) => {
   );
 };
 
-export default HeroSection1;
+export default HeroSection;
