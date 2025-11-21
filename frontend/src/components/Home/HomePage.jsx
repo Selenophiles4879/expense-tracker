@@ -10,7 +10,13 @@ import {
 import { IoIosStats } from "react-icons/io";
 import { FaFilter } from "react-icons/fa6";
 import { Link } from "react-router-dom";
-const HeroSection = () => {
+
+/**
+ * HeroSection1 component, which hides CTA buttons when the user is logged in.
+ * @param {object} props
+ * @param {boolean} props.isLoggedIn - True if the user is authenticated.
+ */
+const HeroSection1 = ({ isLoggedIn }) => { 
   return (
     <>
       <div className="bg-gradient-to-r from-green-400 to-blue-500 text-white py-20 px-4">
@@ -41,14 +47,26 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* Call to Action Button */}
-          <Link to="/register">
-            <button className="mt-8 px-6 py-3 bg-white text-green-500 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-300">
-              Get Started
-            </button>
-          </Link>
+          {/* 1. Conditional Rendering for "Get Started" button */}
+          {!isLoggedIn && (
+            <Link to="/register">
+              <button className="mt-8 px-6 py-3 bg-white text-green-500 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-300">
+                Get Started
+              </button>
+            </Link>
+          )}
+
+          {/* Optional: Show a welcome message instead of the button */}
+          {isLoggedIn && (
+            <p className="mt-8 text-xl font-semibold">
+              Welcome back! View your dashboard.
+            </p>
+          )}
         </div>
       </div>
+      
+      ---
+
       {/* How it works */}
       <div className="py-20 px-4">
         <h2 className="text-3xl font-bold text-center text-gray-800">
@@ -81,6 +99,9 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
+      
+      ---
+
       {/* Testimonials */}
       <div className="bg-gray-100 py-20 px-4">
         <h2 className="text-3xl font-bold text-center text-gray-800">
@@ -105,7 +126,10 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-      {/* CTA */}
+      
+      ---
+
+      {/* CTA Section */}
       <div className="bg-blue-500 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold">
@@ -114,15 +138,19 @@ const HeroSection = () => {
           <p className="mt-4">
             Join us now and start managing your expenses like a pro!
           </p>
-          <Link to="/register">
-            <button className="mt-8 px-6 py-3 bg-white text-blue-500 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-300">
-              Sign Up For Free
-            </button>
-          </Link>
+          
+          {/* 2. Conditional Rendering for "Sign Up For Free" button */}
+          {!isLoggedIn && (
+            <Link to="/register">
+              <button className="mt-8 px-6 py-3 bg-white text-blue-500 font-semibold rounded-lg shadow-md hover:bg-gray-100 transition duration-300">
+                Sign Up For Free
+              </button>
+            </Link>
+          )}
         </div>
       </div>
     </>
   );
 };
 
-export default HeroSection;
+export default HeroSection1;
