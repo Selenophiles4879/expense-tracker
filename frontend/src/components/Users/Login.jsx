@@ -84,14 +84,14 @@ const LoginForm = () => {
           type="email"
           {...formik.getFieldProps("email")}
           placeholder="Email"
-          disabled={isLoading} // Disable input while loading
+          //disabled={isLoading} // Disable input while loading
           className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300"
         />
       </div>
 
-      {formik.touched.email && formik.errors.email && (
+      /*{formik.touched.email && formik.errors.email && (
         <div className="text-red-500 text-sm">{formik.errors.email}</div>
-      )}
+      )}*/
       
       {/* Password */}
       <div className="relative">
@@ -100,14 +100,14 @@ const LoginForm = () => {
           type="password"
           {...formik.getFieldProps("password")}
           placeholder="Password"
-          disabled={isLoading} // Disable input while loading
+          //disabled={isLoading} // Disable input while loading
           className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300"
         />
       </div>
 
-      {formik.touched.password && formik.errors.password && (
+      /*{formik.touched.password && formik.errors.password && (
         <div className="text-red-500 text-sm">{formik.errors.password}</div>
-      )}
+      )}*/
       
       <button
         type="submit"
@@ -122,7 +122,7 @@ const LoginForm = () => {
         ) : (
           <>
             <IoLogInOutline className="h-5 w-5" aria-hidden="true" />
-            <span>Login</span>
+            <span></span>
           </>
         )}
         //Login
