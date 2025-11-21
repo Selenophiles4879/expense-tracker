@@ -72,8 +72,6 @@ const HeroSection = () => {
         </div>
       </div>
       
-      ---
-
       {/* How it works */}
       <div className="py-20 px-4">
         <h2 className="text-3xl font-bold text-center text-gray-800">
@@ -107,8 +105,6 @@ const HeroSection = () => {
         </div>
       </div>
       
-      ---
-
       {/* Testimonials */}
       <div className="bg-gray-100 py-20 px-4">
         <h2 className="text-3xl font-bold text-center text-gray-800">
@@ -134,8 +130,6 @@ const HeroSection = () => {
         </div>
       </div>
       
-      ---
-
       {/* CTA Section */}
       <div className="bg-blue-500 text-white py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
