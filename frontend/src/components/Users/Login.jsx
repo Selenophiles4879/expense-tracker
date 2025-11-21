@@ -8,6 +8,8 @@ import { FaEnvelope, FaLock } from "react-icons/fa";
 import { loginAPI } from "../../services/users/userService";
 import AlertMessage from "../Alert/AlertMessage";
 import { loginAction } from "../../redux/slice/authSlice";
+// 1. IMPORT REQUIRED ICONS
+import { IoReloadCircleOutline, IoLogInOutline } from "react-icons/io5";
 
 const validationSchema = Yup.object({
   email: Yup.string().email("Invalid").required("Email is required"),
@@ -48,7 +50,9 @@ const LoginForm = () => {
 
         navigate("/profile");
       } catch (e) {
-        console.log("Login Error:", e);
+        //console.log("Login Error:", e);
+        // Error logging is now handled by the AlertMessage component via isError/error status
+        console.error("Login Submission Error:", e);
       }
     },
   });
@@ -80,10 +84,15 @@ const LoginForm = () => {
           type="email"
           {...formik.getFieldProps("email")}
           placeholder="Email"
+          disabled={isLoading} // Disable input while loading
           className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300"
         />
       </div>
 
+      {formik.touched.email && formik.errors.email && (
+        <div className="text-red-500 text-sm">{formik.errors.email}</div>
+      )}
+      
       {/* Password */}
       <div className="relative">
         <FaLock className="absolute top-3 left-3 text-gray-400" />
@@ -91,15 +100,32 @@ const LoginForm = () => {
           type="password"
           {...formik.getFieldProps("password")}
           placeholder="Password"
+          disabled={isLoading} // Disable input while loading
           className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300"
         />
       </div>
 
+      {formik.touched.password && formik.errors.password && (
+        <div className="text-red-500 text-sm">{formik.errors.password}</div>
+      )}
+      
       <button
         type="submit"
+        disabled={isLoading}
         className="w-full bg-blue-500 text-white py-2 rounded-md"
       >
-        Login
+        {isLoading ? (
+          <>
+            <IoReloadCircleOutline className="h-5 w-5 animate-spin" aria-hidden="true" />
+            <span>Logging in...</span>
+          </>
+        ) : (
+          <>
+            <IoLogInOutline className="h-5 w-5" aria-hidden="true" />
+            <span>Login</span>
+          </>
+        )}
+        //Login
       </button>
 
       <div className="text-center mt-4">
