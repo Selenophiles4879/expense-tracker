@@ -15,7 +15,8 @@ mongoose
   //.connect("mongodb://localhost:27017/mern-expenses")
   .connect(process.env.DATABASE_URL)
   .then(() => console.log("DB Connected"))
-  .catch((e) => console.log(e));
+  //.catch((e) => console.log(e));
+.catch(e);
 
 // Allow your specific Netlify frontend to access the backend
 const corsOptions = {
