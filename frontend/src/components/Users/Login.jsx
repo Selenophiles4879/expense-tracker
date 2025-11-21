@@ -122,10 +122,9 @@ const LoginForm = () => {
         ) : (
           <>
             <IoLogInOutline className="h-5 w-5" aria-hidden="true" />
-            <span></span>
+            <span>Login</span>
           </>
         )}
-        //Login
       </button>
 
       <div className="text-center mt-4">
