@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useFormik } from "formik";
 import { useDispatch } from "react-redux";
 import * as Yup from "yup";
@@ -8,7 +8,6 @@ import { FaEnvelope, FaLock } from "react-icons/fa";
 import { loginAPI } from "../../services/users/userService";
 import AlertMessage from "../Alert/AlertMessage";
 import { loginAction } from "../../redux/slice/authSlice";
-// 1. IMPORT REQUIRED ICONS
 import { IoReloadCircleOutline, IoLogInOutline } from "react-icons/io5";
 
 const validationSchema = Yup.object({
@@ -22,11 +21,10 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { mutateAsync, isLoading, isError, error, isSuccess, data } =
-    useMutation({
-      mutationFn: loginAPI,
-      mutationKey: ["login"],
-    });
+  const { mutateAsync, isLoading, isError, error, isSuccess } = useMutation({
+    mutationFn: loginAPI,
+    mutationKey: ["login"],
+  });
 
   const formik = useFormik({
     initialValues: {
@@ -38,20 +36,16 @@ const LoginForm = () => {
       try {
         const res = await mutateAsync(values);
 
-        // Save only needed info
         const payload = {
           token: res?.token,
           user: res?.data,
         };
 
         localStorage.setItem("userInfo", JSON.stringify(payload));
-
         dispatch(loginAction(payload));
 
         navigate("/profile");
       } catch (e) {
-        //console.log("Login Error:", e);
-        // Error logging is now handled by the AlertMessage component via isError/error status
         console.error("Login Submission Error:", e);
       }
     },
@@ -77,51 +71,49 @@ const LoginForm = () => {
         <AlertMessage type="success" message="Login successful!" />
       )}
 
-      {/* Email */}
+      {/* Email Field */}
       <div className="relative">
         <FaEnvelope className="absolute top-3 left-3 text-gray-400" />
         <input
           type="email"
           {...formik.getFieldProps("email")}
           placeholder="Email"
-          //disabled={isLoading} // Disable input while loading
+          disabled={isLoading}
           className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300"
         />
+        {formik.touched.email && formik.errors.email && (
+          <div className="text-red-500 text-sm">{formik.errors.email}</div>
+        )}
       </div>
 
-      /*{formik.touched.email && formik.errors.email && (
-        <div className="text-red-500 text-sm">{formik.errors.email}</div>
-      )}*/
-      
-      {/* Password */}
+      {/* Password Field */}
       <div className="relative">
         <FaLock className="absolute top-3 left-3 text-gray-400" />
         <input
           type="password"
           {...formik.getFieldProps("password")}
           placeholder="Password"
-          //disabled={isLoading} // Disable input while loading
+          disabled={isLoading}
           className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300"
         />
+        {formik.touched.password && formik.errors.password && (
+          <div className="text-red-500 text-sm">{formik.errors.password}</div>
+        )}
       </div>
 
-      /*{formik.touched.password && formik.errors.password && (
-        <div className="text-red-500 text-sm">{formik.errors.password}</div>
-      )}*/
-      
+      {/* Submit Button */}
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-blue-500 text-white py-2 rounded-md"
+        className="w-full bg-blue-500 text-white py-2 rounded-md flex items-center justify-center gap-2"
       >
         {isLoading ? (
           <>
-            <IoReloadCircleOutline className="h-5 w-5 animate-spin" aria-hidden="true" />
+            <IoReloadCircleOutline className="h-5 w-5 animate-spin" />
             <span>Logging in...</span>
           </>
         ) : (
           <>
-            <IoLogInOutline className="h-5 w-5" aria-hidden="true" />
             <span>Login</span>
           </>
         )}
