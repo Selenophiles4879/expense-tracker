@@ -10,13 +10,20 @@ import {
 import { IoIosStats } from "react-icons/io";
 import { FaFilter } from "react-icons/fa6";
 import { Link } from "react-router-dom";
+// Import useSelector to access Redux state
+import { useSelector } from "react-redux"; 
 
 /**
  * HeroSection1 component, which hides CTA buttons when the user is logged in.
  * @param {object} props
  * @param {boolean} props.isLoggedIn - True if the user is authenticated.
  */
-const HeroSection = ({ isLoggedIn }) => { 
+const HeroSection = () => { 
+  // 1. Fetch user authentication status from Redux
+  // Check if the user object exists. !! converts the object/null to true/false.
+  const user = useSelector((state) => state?.auth?.user);
+  const isLoggedIn = !!user; // true if 'user' object exists, false otherwise
+  
   return (
     <>
       <div className="bg-gradient-to-r from-green-400 to-blue-500 text-white py-20 px-4">
