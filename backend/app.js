@@ -16,7 +16,7 @@ mongoose
   .connect(process.env.DATABASE_URL)
   .then(() => console.log("DB Connected"))
   //.catch((e) => console.log(e));
-.catch(e);
+.catch((error) => console.error("DB Connection Error:", error));
 
 // Allow your specific Netlify frontend to access the backend
 const corsOptions = {
