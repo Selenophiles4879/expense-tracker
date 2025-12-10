@@ -114,13 +114,29 @@ const usersController = {
     // Interpolate the real FRONTEND URL from env (note the backticks)
     const resetURL = `${process.env.FRONTEND_URL}/users/reset-password/${resetToken}`;
 
-    const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email.`;
+    //const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email.`;
+    // --- START: CHANGE MESSAGE CONTENT TO INCLUDE HTML ---
+    const subject = "Your Password Reset Request";
+    const message = `You requested a password reset. Please use this link: ${resetURL}`;
+    
+    // HTML is highly recommended for a clickable button
+    const htmlMessage = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ccc;">
+            <p>Hello ${user.username},</p>
+            <p>You recently requested to reset the password for your Expense Tracker account.</p>
+            <p>Click the button below to reset your password. This link is only valid for 10 minutes.</p>
+            <a href="${resetURL}" style="display: inline-block; padding: 10px 20px; margin: 15px 0; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+            <p>If you did not request a password reset, please ignore this email.</p>
+        </div>
+    `;
+    // --- END: CHANGE MESSAGE CONTENT TO INCLUDE HTML ---
 
     try {
       await sendEmail({
         email: user.email,
-        subject: "Your Password Reset Token (Valid for 10 min)",
+        subject,
         message,
+        html: htmlMessage, // <-- PASS THE HTML CONTENT HERE
       });
 
       return res.json({ message: "If your email is registered, you will receive a reset link." });
