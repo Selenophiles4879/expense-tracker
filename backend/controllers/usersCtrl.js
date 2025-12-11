@@ -122,7 +122,7 @@ const usersController = {
     // HTML is highly recommended for a clickable button
     const htmlMessage = `
 <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Hi <strong>${user.name}</strong>,
+  Hi <strong>${user.username}</strong>,
 </p>
 
 <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
