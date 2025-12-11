@@ -121,14 +121,46 @@ const usersController = {
     
     // HTML is highly recommended for a clickable button
     const htmlMessage = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ccc;">
-            <p>Hello ${user.username},</p>
-            <p>You recently requested to reset the password for your Expense Tracker account.</p>
-            <p>Click the button below to reset your password. This link is only valid for 10 minutes.</p>
-            <a href="${resetURL}" style="display: inline-block; padding: 10px 20px; margin: 15px 0; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
-            <p>If you did not request a password reset, please ignore this email.</p>
-        </div>
-    `;
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Hi <strong>${user.name}</strong>,
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  We received a request to reset your password for your Expense Tracker account.
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Please click the button below to reset your password. This link will expire in <strong>15 minutes</strong>.
+</p>
+
+<div style="text-align:center; margin:30px 0;">
+  <a href="${resetUrl}" 
+     style="
+       background-color: #4CAF50; 
+       color: white; 
+       padding: 12px 25px; 
+       text-decoration: none; 
+       border-radius: 5px;
+       font-weight: bold;
+       font-family: Arial, sans-serif;
+       display: inline-block;
+       min-width: 150px;
+       width: 80%;
+       max-width: 250px;
+       box-sizing: border-box;
+     ">
+     Reset Password
+  </a>
+</div>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  If you did not request a password reset, you can safely ignore this email.
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Thanks,<br/>Expense Tracker Team
+</p>
+`;
     // --- END: CHANGE MESSAGE CONTENT TO INCLUDE HTML ---
 
     try {
