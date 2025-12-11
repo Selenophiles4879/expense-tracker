@@ -22,6 +22,6 @@
     "js-base64": "^3.7.8",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.4",
-    "@sendgrid/mail": "^8.1.6"
+    "@getbrevo/brevo": "^3.0.1"
   }
 }
