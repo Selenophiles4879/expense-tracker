@@ -1,7 +1,7 @@
 // utils/sendEmail.js
 const brevo = require("@getbrevo/brevo");
 
-const sendEmail = async (toEmail, subject, htmlContent) => {
+const sendEmail = async ({to, subject, htmlContent}) => {
   try {
     const apiInstance = new brevo.TransactionalEmailsApi();
     apiInstance.setApiKey(
@@ -13,7 +13,7 @@ const sendEmail = async (toEmail, subject, htmlContent) => {
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
     sendSmtpEmail.sender = { email: process.env.FROM_EMAIL, name: "Expense Tracker" };
-    sendSmtpEmail.to = [{ email: toEmail }];
+    sendSmtpEmail.to = [{ email: to }];
 
     await apiInstance.sendTransacEmail(sendSmtpEmail);
   } catch (err) {
