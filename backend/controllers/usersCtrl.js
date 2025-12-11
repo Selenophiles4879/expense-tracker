@@ -134,7 +134,7 @@ const usersController = {
 </p>
 
 <div style="text-align:center; margin:30px 0;">
-  <a href="${resetUrl}" 
+  <a href="${resetURL}" 
      style="
        background-color: #4CAF50; 
        color: white; 
@@ -165,9 +165,9 @@ const usersController = {
 
     try {
       await sendEmail({
-        email: user.email,
+        to: user.email,
         subject,
-        message,
+        //message,
         html: htmlMessage, // <-- PASS THE HTML CONTENT HERE
       });
 
