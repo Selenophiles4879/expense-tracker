@@ -22,4 +22,4 @@ export const sendEmail = async (toEmail, subject, htmlContent) => {
   }
 };
 
-module.exports = sendEmail;
+module.exports = {sendEmail};
