@@ -2,7 +2,7 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../model/User");
-const sendEmail = require("../utils/sendEmail"); // <-- CHECK THIS LINE
+const {sendEmail} = require("../utils/sendEmail"); // <-- CHECK THIS LINE
 const crypto = require("crypto"); // <-- CHECK THIS LINE
 
 const usersController = {
