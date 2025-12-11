@@ -23,7 +23,7 @@ const sendEmail = async ({ to, subject, html }) => {
     console.log("Email sending failed:", err.message);
     throw err;
   }
-};*/
+};
 
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -42,6 +42,30 @@ const sendEmail = async ({ to, subject, text, html }) => {
   } catch (error) {
     console.error('Error sending email:', error);
     throw new Error('Failed to send email');
+  }
+};*/
+
+// utils/sendEmail.js
+import brevo from "@getbrevo/brevo";
+
+export const sendEmail = async (toEmail, subject, htmlContent) => {
+  try {
+    const apiInstance = new brevo.TransactionalEmailsApi();
+    apiInstance.setApiKey(
+      brevo.TransactionalEmailsApiApiKeys.apiKey,
+      process.env.BREVO_API_KEY
+    );
+
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = htmlContent;
+    sendSmtpEmail.sender = { email: process.env.FROM_EMAIL, name: "Expense Tracker" };
+    sendSmtpEmail.to = [{ email: toEmail }];
+
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
+  } catch (err) {
+    console.error("Email sending failed:", err);
+    throw new Error("Email could not be sent. Please try again later.");
   }
 };
 
