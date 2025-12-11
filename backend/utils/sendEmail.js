@@ -84,7 +84,7 @@ const sendEmail = async (options) => {
   }
 };
 
-module.exports = sendEmail;*/
+module.exports = sendEmail;
 
 // backend/utils/sendEmail.js
 
@@ -124,7 +124,7 @@ const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
  * @param {string} options.subject - Email subject.
  * @param {string} options.message - Plain text message or HTML content.
  * @param {string} [options.html] - Optional HTML content (recommended for reset links).
- */
+ 
 const sendEmail = async (options) => {
   try {
     const fromEmail = process.env.GMAIL_SENDER_EMAIL; // e.g., 'noreply@yourapp.com'
@@ -173,6 +173,30 @@ const sendEmail = async (options) => {
 
     throw new Error("Email could not be sent via Gmail API. Please try again later.");
   }
-};
+};*/
 
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export const sendEmail = async ({ to, subject, html }) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Expense Tracker <onboarding@resend.dev>', // or your verified domain
+      to,
+      subject,
+      html,
+    });
+
+    if (error) {
+      console.log("Resend Error:", error);
+      throw new Error("Failed to send email");
+    }
+
+    return data;
+  } catch (err) {
+    console.log("Email sending failed:", err.message);
+    throw err;
+  }
+};
 module.exports = sendEmail;
