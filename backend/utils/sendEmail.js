@@ -117,7 +117,7 @@ const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
 // --- EMAIL SENDING FUNCTION ---
 
-/**
+
  * Sends an email using the Google Gmail API.
  * @param {object} options - Email options.
  * @param {string} options.email - Recipient email address.
