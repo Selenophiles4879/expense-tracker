@@ -1,7 +1,7 @@
 // utils/sendEmail.js
 const brevo = require("@getbrevo/brevo");
 
-export const sendEmail = async (toEmail, subject, htmlContent) => {
+const sendEmail = async (toEmail, subject, htmlContent) => {
   try {
     const apiInstance = new brevo.TransactionalEmailsApi();
     apiInstance.setApiKey(
