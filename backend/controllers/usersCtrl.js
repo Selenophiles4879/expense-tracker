@@ -168,7 +168,7 @@ const usersController = {
         to: user.email,
         subject,
         //message,
-        html: htmlMessage, // <-- PASS THE HTML CONTENT HERE
+        htmlContent: htmlMessage, // <-- PASS THE HTML CONTENT HERE
       });
 
       return res.json({ message: "If your email is registered, you will receive a reset link." });
