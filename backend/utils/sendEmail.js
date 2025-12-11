@@ -46,7 +46,7 @@ const sendEmail = async ({ to, subject, text, html }) => {
 };*/
 
 // utils/sendEmail.js
-import brevo from "@getbrevo/brevo";
+const brevo = require("@getbrevo/brevo");
 
 export const sendEmail = async (toEmail, subject, htmlContent) => {
   try {
