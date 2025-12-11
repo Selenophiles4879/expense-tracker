@@ -130,7 +130,7 @@ const usersController = {
 </p>
 
 <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Please click the button below to reset your password. This link will expire in <strong>15 minutes</strong>.
+  Please click the button below to reset your password. This link will expire in <strong>10 minutes</strong>.
 </p>
 
 <div style="text-align:center; margin:30px 0;">
