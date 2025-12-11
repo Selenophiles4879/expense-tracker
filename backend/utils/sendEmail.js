@@ -32,7 +32,7 @@ const sendEmail = async ({ to, subject, text, html }) => {
   try {
     const msg = {
       to, // recipient
-      from: process.env.SENDGRID_SENDER, // verified sender
+      from: `Expense Tracker <${process.env.SENDGRID_SENDER}>`, // your verified email
       subject,
       html,
     };
