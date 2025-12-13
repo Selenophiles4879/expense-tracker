@@ -20,6 +20,14 @@ export default function PrivateNavbar() {
   const navigate = useNavigate(); // 3. Get navigate
   const queryClient = useQueryClient(); // 4. Get the query client
 
+// ✅ AUTH STATE (MANDATORY)
+  const user = useSelector((state) => state.auth.user);
+
+  // ✅ DO NOT RENDER NAVBAR IF LOGGED OUT
+  if (!user) {
+    return null;
+  }
+  
 //Logout handler
 const logoutHandler = () => {
   // 1. Dispatch logout (this clears Redux and localStorage)
