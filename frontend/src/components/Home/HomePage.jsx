@@ -66,7 +66,11 @@ const HeroSection = () => {
           {/* Optional: Show a welcome message instead of the button */}
           {isLoggedIn && (
             <p className="mt-8 text-xl font-semibold">
-              Welcome back! View your dashboard.
+              {/*Welcome back! View your dashboard.*/}
+              Welcome back,{" "}
+              <span className="text-yellow-200 font-bold">
+                {user?.username || user?.name || "User"}
+              </span>{" "}👋
             </p>
           )}
         </div>
