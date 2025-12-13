@@ -2,7 +2,9 @@ import { createSlice } from "@reduxjs/toolkit";
 
 // 1. Get the "userInfo" object from localStorage.
 // This object is { message, token, id, email, username }
-const userInfoFromStorage = JSON.parse(localStorage.getItem("userInfo")) || null;
+//const userInfoFromStorage = JSON.parse(localStorage.getItem("userInfo")) || null;
+const userInfoFromStorage = JSON.parse(sessionStorage.getItem("userInfo")) || null;
+
 
 //!Initial State
 const authSlice = createSlice({
@@ -31,7 +33,8 @@ const authSlice = createSlice({
     logoutAction: (state, action) => {
   state.user = null;
   // 4. (FIXED) This now correctly removes the item from localStorage
-  localStorage.removeItem("userInfo");
+  //localStorage.removeItem("userInfo");
+      sessionStorage.removeItem("userInfo");
 },
   },
 });
