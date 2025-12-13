@@ -8,6 +8,7 @@ import { useDispatch } from "react-redux";
 import { IoLogOutOutline } from "react-icons/io5";
 import { SiAuthy } from "react-icons/si";
 import { logoutAction } from "../../redux/slice/authSlice";
+import { useSelector } from "react-redux";
 //import { useQueryClient } from "@tanstack/react-query"; // 2. Import useQueryClient
 
 function classNames(...classes) {
