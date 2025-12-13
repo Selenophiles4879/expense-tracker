@@ -12,11 +12,32 @@ import TransactionForm from "./components/Transactions/TransactionForm";
 import Dashboard from "./components/Users/Dashboard";
 import UserProfile from "./components/Users/UserProfile";
 import AuthRoute from "./components/Auth/AuthRoute";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { logoutAction } from "./redux/slice/authSlice";
+
 
 import ForgotPassword from "./components/Users/ForgotPassword"; // <-- ADD
 import ResetPassword from "./components/Users/ResetPassword"; // <-- ADD
 
 function App() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      if (event.key === "userInfo" && !event.newValue) {
+        dispatch(logoutAction());
+        window.location.href = "/login";
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [dispatch]);
+
   const user = useSelector((state) => state?.auth?.user);
 
   return (
