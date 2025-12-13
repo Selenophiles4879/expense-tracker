@@ -37,11 +37,13 @@ const LoginForm = () => {
         const res = await mutateAsync(values);
 
         const payload = {
-          token: res?.token,
-          user: res?.data,
+       id: res?.user?.id,
+       email: res?.user?.email,
+       username: res?.user?.username,
+       token: res?.token,
         };
 
-        localStorage.setItem("userInfo", JSON.stringify(payload));
+        sessionStorage.setItem("userInfo", JSON.stringify(payload));
         dispatch(loginAction(payload));
 
         navigate("/profile");
