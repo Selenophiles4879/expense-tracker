@@ -157,6 +157,11 @@ const usersController = {
   If you did not request a password reset, you can safely ignore this email.
 </p>
 
+<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #b71c1c;">
+  This is a secure message. Please do not share this link with anyone.
+  The link will expire after one use.
+</p>
+
 <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
   Thanks,<br/>Expense Tracker Team
 </p>
