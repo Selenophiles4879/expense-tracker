@@ -3,7 +3,7 @@
 export const getUserFromStorage = () => {
   try {
     // 1. Get the "userInfo" string from localStorage
-    const userInfoString = localStorage.getItem("userInfo");
+    const userInfoString = sessionStorage.getItem("userInfo");
 
     // 2. If it doesn't exist, return null
     if (!userInfoString) {
