@@ -49,14 +49,48 @@ const usersController = {
       password: hashed,
     });
 
-    res.status(201).json({
-      message: "Registration successful",
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+    const verifyToken = user.createEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+    const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+    await sendEmail({
+    to: user.email,
+    subject: "Verify your email address",
+    htmlContent: `
+    <h3>Hello ${user.username}</h3>
+    <p>Please verify your email to activate your account.</p>
+    <a href="${verifyURL}">Verify Email</a>
+    <p>This link expires in 15 minutes.</p>`,
     });
+
+    res.status(201).json({
+     message: "Registration successful. Please verify your email.",
+    });
+
+    //Verify Email, to save registration
+    verifyEmail: asyncHandler(async (req, res) => {
+    const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+   const user = await User.findOne({
+    emailVerificationToken: hashedToken,
+    emailVerificationExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error("Verification link is invalid or expired");
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpires = undefined;
+
+  await user.save();
+
+  res.json({ message: "Email verified successfully" });
+}), 
   }),
 
   //! LOGIN
