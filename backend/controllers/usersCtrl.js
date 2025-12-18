@@ -126,7 +126,7 @@ const usersController = {
   }
 
   res.json({ message: "Email verified successfully" });
-});
+}),
 
   
   //! LOGIN
