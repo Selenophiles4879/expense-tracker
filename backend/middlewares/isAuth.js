@@ -22,20 +22,16 @@ const isAuthenticated = async (req, res, next) => {
       return res.status(401).json({ message: "User not found" });
     }
 
-    // 4️⃣ Check email verification
     if (!user.isEmailVerified) {
       return res.status(403).json({ message: "Email not verified" });
     }
 
-    // 5️⃣ Attach user to request
     req.user = { id: user._id };
-
     next();
-  } catch (error) {
+  } catch (err) {
     return res
       .status(401)
       .json({ message: "Token expired or invalid, please login again" });
   }
 };
-
 module.exports = isAuthenticated;
