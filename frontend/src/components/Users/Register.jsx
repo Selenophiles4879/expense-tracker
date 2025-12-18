@@ -49,13 +49,19 @@ const RegistrationForm = () => {
     },
   });
   //Redirect
-  useEffect(() => {
+  /*useEffect(() => {
     setTimeout(() => {
       if (isSuccess) {
         navigate("/login");
       }
     }, 3000);
-  }, [isPending, isError, error, isSuccess]);
+  }, [isPending, isError, error, isSuccess]);*/
+useEffect(() => {
+  if (isSuccess) {
+    // Do nothing — user must verify email
+  }
+}, [isSuccess]);
+  
   return (
     <form
       onSubmit={formik.handleSubmit}
@@ -73,8 +79,12 @@ const RegistrationForm = () => {
         />
       )}
       {isSuccess && (
-        <AlertMessage type="success" message="Registration success" />
-      )}
+       <AlertMessage
+          type="success"
+          message="Registration successful. Please check your email to verify your account."
+       />
+     )}
+
       <p className="text-sm text-center text-gray-500">
         Join our community now!
       </p>
