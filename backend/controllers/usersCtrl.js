@@ -43,13 +43,51 @@ const usersController = {
     to: user.email,
     subject: "Verify your email address",
     htmlContent: `
-      <h3>Hello ${user.username}</h3>
-      <p>Please verify your email to activate your account.</p>
-      <a href="${verifyURL}">Verify Email</a>
-      <p>This link expires in 15 minutes.</p>
-      <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Hi <strong>${user.username}</strong>,
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  We received a request to verify your Email for your Expense Tracker account.
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Please click the button below to verify your Email. This link will expire in <strong>10 minutes</strong>.
+</p>
+
+<div style="text-align:center; margin:30px 0;">
+  <a href="${verifyURL}" 
+     style="
+       background-color: #4CAF50; 
+       color: white; 
+       padding: 12px 25px; 
+       text-decoration: none; 
+       border-radius: 5px;
+       font-weight: bold;
+       font-family: Arial, sans-serif;
+       display: inline-block;
+       min-width: 150px;
+       width: 80%;
+       max-width: 250px;
+       box-sizing: border-box;
+     ">
+     Verify Email
+  </a>
+</div>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  If you are not trying to verify your Email for Registration, you can safely ignore this email.
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #b71c1c;">
+  This is a secure message. Please do not share this link with anyone.
+  The link will expire after one use.
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
   Thanks,<br/>Expense Tracker Team
-</p>`,
+</p>
+`,
   });
   } catch (err) {
   console.error("❌ Verification email failed:", err);
