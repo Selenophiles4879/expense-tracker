@@ -131,49 +131,68 @@ const usersController = {
   
   //! LOGIN
   login: asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    let user = await User.findOne({ email });
-    if (!user) {
-      throw new Error("Invalid credentials");
+  // 1️⃣ Find user
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error("Invalid credentials");
+  }
+
+  // 2️⃣ Check password
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new Error("Invalid credentials");
+  }
+
+  // 3️⃣ 🚨 Email not verified → AUTO SEND VERIFICATION
+  if (!user.isEmailVerified) {
+
+    // ⏱️ SAFETY: resend only if token expired or missing
+    if (
+      !user.emailVerificationExpires ||
+      user.emailVerificationExpires < Date.now()
+    ) {
+      const verifyToken = user.createEmailVerificationToken();
+      await user.save({ validateBeforeSave: false });
+
+      const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email address",
+        htmlContent: `
+          <p>Hi <strong>${user.username}</strong>,</p>
+          <p>Please verify your email to continue logging in.</p>
+          <a href="${verifyURL}">Verify Email</a>
+          <p>This link expires in 15 minutes.</p>
+        `,
+      });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new Error("Invalid credentials");
-    }
+    res.status(403);
+    throw new Error(
+      "Please verify your email before logging in. A verification email has been sent."
+    );
+  }
 
-    // 3️⃣ 🔥 FORCE fresh DB read (IMPORTANT)
-  user = await User.findById(user._id);
-    
-    if (!user.isEmailVerified) {
-      res.status(403);
-    throw new Error("Please verify your email before logging in");
-    }
+  // 4️⃣ Email verified → LOGIN SUCCESS
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "1d",
+  });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+  res.json({
+    message: "Login successful",
+    token,
+    user: {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      isEmailVerified: user.isEmailVerified,
+    },
+  });
+}),
 
-    res.json({
-      message: "Login successful",
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        isEmailVerified: user.isEmailVerified, // ✅ REQUIRED
-      },
-    });
-
-console.log("LOGIN USER:", {
-  id: user._id,
-  email: user.email,
-  isEmailVerified: user.isEmailVerified,
-  db: user.db?.name
-});
-    
-  }),
 
 // --- ADD THIS NEW FUNCTION ---
   //! FORGOT PASSWORD
