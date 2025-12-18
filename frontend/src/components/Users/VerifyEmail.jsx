@@ -8,7 +8,7 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_BASE_URL}/api/v1/users/verify-email/${token}`)
+      .get(`${import.meta.env.VITE_BASE_URL}/users/verify-email/${token}`)
       .then(() => {
         alert("Email verified successfully. You can now login.");
         navigate("/login");
