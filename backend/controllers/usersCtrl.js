@@ -121,6 +121,13 @@ const usersController = {
 
   await user.save();
 
+console.log("VERIFY EMAIL USER:", {
+  id: user._id,
+  email: user.email,
+  isEmailVerified: user.isEmailVerified,
+  db: user.db?.name
+});
+    
   res.json({ message: "Email verified successfully" });
 }),
   
@@ -160,6 +167,14 @@ const usersController = {
         isEmailVerified: user.isEmailVerified, // ✅ REQUIRED
       },
     });
+
+console.log("LOGIN USER:", {
+  id: user._id,
+  email: user.email,
+  isEmailVerified: user.isEmailVerified,
+  db: user.db?.name
+});
+    
   }),
 
 // --- ADD THIS NEW FUNCTION ---
