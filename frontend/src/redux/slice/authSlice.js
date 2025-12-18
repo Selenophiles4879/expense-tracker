@@ -27,6 +27,7 @@ const authSlice = createSlice({
     id: action.payload.id,
     email: action.payload.email,
     username: action.payload.username,
+    isEmailVerified: action.payload.isEmailVerified,
   };
 },
     //Logout
