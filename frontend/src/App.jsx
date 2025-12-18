@@ -61,6 +61,7 @@ function AppContent() {
         <Route path="/register" element={<RegistrationForm />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/users/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
         {/* PRIVATE ROUTES */}
         <Route
