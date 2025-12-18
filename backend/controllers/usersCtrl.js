@@ -38,6 +38,7 @@ const usersController = {
 
   const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
 
+   try {
   await sendEmail({
     to: user.email,
     subject: "Verify your email address",
@@ -50,6 +51,9 @@ const usersController = {
   Thanks,<br/>Expense Tracker Team
 </p>`,
   });
+  } catch (err) {
+  console.error("❌ Verification email failed:", err);
+}
 
   res.status(201).json({
     message: "Registration successful. Please verify your email.",
