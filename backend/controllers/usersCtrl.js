@@ -107,6 +107,11 @@ const usersController = {
       throw new Error("Invalid credentials");
     }
 
+    if (!user.isEmailVerified) {
+      res.status(403);
+    throw new Error("Please verify your email before logging in");
+    }
+
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
@@ -328,7 +333,48 @@ updateUserProfile: asyncHandler(async (req, res) => {
 
     // 4. Safely apply and save the updates
     // Use the document's save method instead of findByIdAndUpdate to ensure validation runs
-    if (email) user.email = email;
+    //if (email) user.email = email;
+    if (email && email !== user.email) {
+    user.email = email;
+    user.isEmailVerified = false;
+    const verifyToken = user.createEmailVerificationToken();
+    await user.save({ validateBeforeSave: false });
+   const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+  await sendEmail({
+    to: email,
+    subject: "Verify your new email",
+    htmlContent: `<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Hi <strong>${user.username}</strong>,
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Please click the button below to verify your Email. This link will expire in <strong>10 minutes</strong>.
+</p>
+<div style="text-align:center; margin:30px 0;">
+  <a href="${verifyURL}" 
+     style="
+       background-color: #4CAF50; 
+       color: white; 
+       padding: 12px 25px; 
+       text-decoration: none; 
+       border-radius: 5px;
+       font-weight: bold;
+       font-family: Arial, sans-serif;
+       display: inline-block;
+       min-width: 150px;
+       width: 80%;
+       max-width: 250px;
+       box-sizing: border-box;
+     ">
+     Reset Password
+  </a>
+</div>
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Thanks,<br/>Expense Tracker Team
+</p>`,
+  });
+}
+
     if (username) user.username = username;
     
     const updatedUser = await user.save(); 
