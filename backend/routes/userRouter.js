@@ -7,6 +7,10 @@ const userRouter = express.Router();
 // REGISTER
 userRouter.post("/users/register", usersController.register);
 
+//VERIFY EMAIL
+userRouter.get("/users/verify-email/:token",usersController.verifyEmail);
+
+
 // LOGIN
 userRouter.post("/users/login", usersController.login);
 
