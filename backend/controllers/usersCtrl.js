@@ -7,73 +7,63 @@ const crypto = require("crypto"); // <-- CHECK THIS LINE
 
 const usersController = {
   //! REGISTER
-  register: asyncHandler(async (req, res) => {
-    const { username, email, password } = req.body;
+ register: asyncHandler(async (req, res) => {
+  const { username, email, password } = req.body;
 
-    if (!username || !email || !password) {
-      throw new Error("All fields are required");
-    }
+  if (!username || !email || !password) {
+    throw new Error("All fields are required");
+  }
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      throw new Error("User already exists");
-    }
+  if (await User.findOne({ email })) {
+    res.status(409);
+    throw new Error("This email is already registered.");
+  }
 
-    // Check for Duplicate Email
-    const emailExists = await User.findOne({ email });
-    if (emailExists) {
-        // Set the status code explicitly
-        res.status(409); 
-        throw new Error("This email is already registered.");
-    }
+  if (await User.findOne({ username })) {
+    res.status(409);
+    throw new Error("The username is already taken.");
+  }
 
-    // Check for Duplicate Username
-   const usernameExists = await User.findOne({ username });
-    if (usernameExists) {
-        // Set the status code explicitly
-        res.status(409); 
-        throw new Error("The username is already taken. Please choose another."); 
-    }
-    
-    // 3. Username length check (Keep your existing validation)
-    if (username.length < 3) {
-        throw new Error("Username must be at least 3 characters long");
-    }
-    
-    const salt = await bcrypt.genSalt(10);
-    const hashed = await bcrypt.hash(password, salt);
+  const hashed = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
-      username,
-      email,
-      password: hashed,
-    });
+  const user = await User.create({
+    username,
+    email,
+    password: hashed,
+    isEmailVerified: false,
+  });
 
-    const verifyToken = user.createEmailVerificationToken();
-    await user.save({ validateBeforeSave: false });
-    const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
-    await sendEmail({
+  const verifyToken = user.createEmailVerificationToken();
+  await user.save({ validateBeforeSave: false });
+
+  const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+
+  await sendEmail({
     to: user.email,
     subject: "Verify your email address",
     htmlContent: `
-    <h3>Hello ${user.username}</h3>
-    <p>Please verify your email to activate your account.</p>
-    <a href="${verifyURL}">Verify Email</a>
-    <p>This link expires in 15 minutes.</p>`,
-    });
+      <h3>Hello ${user.username}</h3>
+      <p>Please verify your email to activate your account.</p>
+      <a href="${verifyURL}">Verify Email</a>
+      <p>This link expires in 15 minutes.</p>
+      <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Thanks,<br/>Expense Tracker Team
+</p>`,
+  });
 
-    res.status(201).json({
-     message: "Registration successful. Please verify your email.",
-    });
+  res.status(201).json({
+    message: "Registration successful. Please verify your email.",
+  });
+}),
 
-    //Verify Email, to save registration
-    verifyEmail: asyncHandler(async (req, res) => {
-    const hashedToken = crypto
+  //EMAIL VERIFY
+  verifyEmail: asyncHandler(async (req, res) => {
+  const hashedToken = crypto
     .createHash("sha256")
     .update(req.params.token)
     .digest("hex");
 
-   const user = await User.findOne({
+  const user = await User.findOne({
     emailVerificationToken: hashedToken,
     emailVerificationExpires: { $gt: Date.now() },
   });
@@ -90,9 +80,8 @@ const usersController = {
   await user.save();
 
   res.json({ message: "Email verified successfully" });
-}), 
-  }),
-
+}),
+  
   //! LOGIN
   login: asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -123,6 +112,7 @@ const usersController = {
         id: user._id,
         username: user.username,
         email: user.email,
+        isEmailVerified: user.isEmailVerified, // ✅ REQUIRED
       },
     });
   }),
@@ -366,7 +356,7 @@ updateUserProfile: asyncHandler(async (req, res) => {
        max-width: 250px;
        box-sizing: border-box;
      ">
-     Reset Password
+     Verify Email
   </a>
 </div>
 <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
