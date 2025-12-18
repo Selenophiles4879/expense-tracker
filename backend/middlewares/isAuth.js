@@ -1,24 +1,34 @@
 const jwt = require("jsonwebtoken");
+const User = require("../model/User");
 
-const isAuthenticated = (req, res, next) => {
+const isAuthenticated = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-const user = await User.findById(decoded.id);
-if (!user.isEmailVerified) {
-  return res.status(403).json({ message: "Email not verified" });
-}
-  
+  // 1️⃣ Check token exists
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "No token provided" });
   }
-  
+
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, "masynctechKey");
+    // 2️⃣ Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // FIX: Store user as an object
-    req.user = { id: decoded.id };
+    // 3️⃣ Fetch user from DB
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // 4️⃣ Check email verification
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ message: "Email not verified" });
+    }
+
+    // 5️⃣ Attach user to request
+    req.user = { id: user._id };
 
     next();
   } catch (error) {
