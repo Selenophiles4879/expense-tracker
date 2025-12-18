@@ -10,6 +10,7 @@ import LoginForm from "./components/Users/Login";
 import RegistrationForm from "./components/Users/Register";
 import ForgotPassword from "./components/Users/ForgotPassword";
 import ResetPassword from "./components/Users/ResetPassword";
+import VerifyEmail from "./components/Users/VerifyEmail";
 
 // Private Components
 import PrivateNavbar from "./components/NavBar/PrivateNavBar";
