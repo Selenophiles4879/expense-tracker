@@ -36,14 +36,20 @@ const LoginForm = () => {
       try {
         const res = await mutateAsync(values);
 
-        const payload = {
-       id: res?.user?.id,
-       email: res?.user?.email,
-       username: res?.user?.username,
-       token: res?.token,
-        };
+        // 1️⃣ Redux-safe user object (NO token)
+    const payload = {
+      id: res.user.id,
+      email: res.user.email,
+      username: res.user.username,
+      isEmailVerified: res.user.isEmailVerified,
+    };
 
-        sessionStorage.setItem("userInfo", JSON.stringify(payload));
+    // 2️⃣ Persist token separately (CRITICAL)
+    sessionStorage.setItem("userInfo",JSON.stringify({
+      ...payload,token: res.token, // ✅ token stored here
+      })
+    );
+        //sessionStorage.setItem("userInfo", JSON.stringify(payload));
         dispatch(loginAction(payload));
 
         navigate("/profile");
