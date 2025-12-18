@@ -128,7 +128,7 @@ const usersController = {
   login: asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
     if (!user) {
       throw new Error("Invalid credentials");
     }
@@ -138,6 +138,9 @@ const usersController = {
       throw new Error("Invalid credentials");
     }
 
+    // 3️⃣ 🔥 FORCE fresh DB read (IMPORTANT)
+  user = await User.findById(user._id);
+    
     if (!user.isEmailVerified) {
       res.status(403);
     throw new Error("Please verify your email before logging in");
