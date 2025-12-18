@@ -99,37 +99,35 @@ const usersController = {
 }),
 
   //EMAIL VERIFY
-  verifyEmail: asyncHandler(async (req, res) => {
+ verifyEmail: asyncHandler(async (req, res) => {
   const hashedToken = crypto
     .createHash("sha256")
     .update(req.params.token)
     .digest("hex");
 
-  const user = await User.findOne({
-    emailVerificationToken: hashedToken,
-    emailVerificationExpires: { $gt: Date.now() },
-  });
+  const user = await User.findOneAndUpdate(
+    {
+      emailVerificationToken: hashedToken,
+      emailVerificationExpires: { $gt: Date.now() },
+    },
+    {
+      $set: {
+        isEmailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+    },
+    { new: true }
+  );
 
   if (!user) {
     res.status(400);
     throw new Error("Verification link is invalid or expired");
   }
 
-  user.isEmailVerified = true;
-  user.emailVerificationToken = undefined;
-  user.emailVerificationExpires = undefined;
-
-  await user.save();
-
-console.log("VERIFY EMAIL USER:", {
-  id: user._id,
-  email: user.email,
-  isEmailVerified: user.isEmailVerified,
-  db: user.db?.name
-});
-    
   res.json({ message: "Email verified successfully" });
-}),
+});
+
   
   //! LOGIN
   login: asyncHandler(async (req, res) => {
