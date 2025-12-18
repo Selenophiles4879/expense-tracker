@@ -145,36 +145,73 @@ const usersController = {
     throw new Error("Invalid credentials");
   }
 
-  // 3️⃣ 🚨 Email not verified → AUTO SEND VERIFICATION
-  if (!user.isEmailVerified) {
+ // 🚨 Email not verified → ALWAYS resend verification email
+if (!user.isEmailVerified) {
 
-    // ⏱️ SAFETY: resend only if token expired or missing
-    if (
-      !user.emailVerificationExpires ||
-      user.emailVerificationExpires < Date.now()
-    ) {
-      const verifyToken = user.createEmailVerificationToken();
-      await user.save({ validateBeforeSave: false });
+  // 1️⃣ Always generate a fresh token (invalidates old ones)
+  const verifyToken = user.createEmailVerificationToken();
+  await user.save({ validateBeforeSave: false });
 
-      const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+  // 2️⃣ Send latest verification email
+  const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
 
-      await sendEmail({
-        to: user.email,
-        subject: "Verify your email address",
-        htmlContent: `
-          <p>Hi <strong>${user.username}</strong>,</p>
-          <p>Please verify your email to continue logging in.</p>
-          <a href="${verifyURL}">Verify Email</a>
-          <p>This link expires in 15 minutes.</p>
-        `,
-      });
-    }
+  await sendEmail({
+    to: user.email,
+    subject: "Verify your email address",
+    htmlContent: `
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Hi <strong>${user.username}</strong>,
+</p>
 
-    res.status(403);
-    throw new Error(
-      "Please verify your email before logging in. A verification email has been sent."
-    );
-  }
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  We received a request to verify your Email for your Expense Tracker account.
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Please click the button below to verify your Email. This link will expire in <strong>15 minutes</strong>.
+</p>
+
+<div style="text-align:center; margin:30px 0;">
+  <a href="${verifyURL}" 
+     style="
+       background-color: #4CAF50; 
+       color: white; 
+       padding: 12px 25px; 
+       text-decoration: none; 
+       border-radius: 5px;
+       font-weight: bold;
+       font-family: Arial, sans-serif;
+       display: inline-block;
+       min-width: 150px;
+       width: 80%;
+       max-width: 250px;
+       box-sizing: border-box;
+     ">
+     Verify Email
+  </a>
+</div>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  If you are not trying to verify your Email for Registration, you can safely ignore this email.
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #b71c1c;">
+  This is a secure message. Please do not share this link with anyone.
+  The link will expire after one use.
+</p>
+
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+  Thanks,<br/>Expense Tracker Team
+</p>
+`,
+  });
+
+  // 3️⃣ Block login
+  res.status(403);
+  throw new Error(
+    "Please verify your email before logging in. A fresh verification email has been sent."
+  );
+}
 
   // 4️⃣ Email verified → LOGIN SUCCESS
   const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
