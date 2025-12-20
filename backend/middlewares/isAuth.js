@@ -1,10 +1,10 @@
+// middleware/isAuth.js
 const jwt = require("jsonwebtoken");
 const User = require("../model/User");
 
 const isAuthenticated = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  // 1️⃣ Check token exists
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "No token provided" });
   }
@@ -12,26 +12,19 @@ const isAuthenticated = async (req, res, next) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    // 2️⃣ Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // 3️⃣ Fetch user from DB
     const user = await User.findById(decoded.id);
 
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    if (!user.isEmailVerified) {
-      return res.status(403).json({ message: "Email not verified" });
-    }
-
+    // ✅ Only authentication
     req.user = { id: user._id };
     next();
-  } catch (err) {
-    return res
-      .status(401)
-      .json({ message: "Token expired or invalid, please login again" });
+  } catch {
+    return res.status(401).json({ message: "Token expired or invalid" });
   }
 };
+
 module.exports = isAuthenticated;
