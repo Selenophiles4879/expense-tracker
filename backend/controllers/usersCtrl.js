@@ -2,47 +2,53 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../model/User");
-const {sendEmail} = require("../utils/sendEmail"); // <-- CHECK THIS LINE
-const crypto = require("crypto"); // <-- CHECK THIS LINE
+const { sendEmail } = require("../utils/sendEmail");
+const crypto = require("crypto");
 
 const usersController = {
   //! REGISTER
- register: asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  register: asyncHandler(async (req, res) => {
+    const { username, email, password } = req.body;
 
-  if (!username || !email || !password) {
-    throw new Error("All fields are required");
-  }
+    if (!username || !email || !password) {
+      throw new Error("All fields are required");
+    }
 
-  if (await User.findOne({ email })) {
-    res.status(409);
-    throw new Error("This email is already registered.");
-  }
+    if (await User.findOne({ email })) {
+      res.status(409);
+      throw new Error("This email is already registered.");
+    }
 
-  if (await User.findOne({ username })) {
-    res.status(409);
-    throw new Error("The username is already taken.");
-  }
+    if (await User.findOne({ username })) {
+      res.status(409);
+      throw new Error("The username is already taken.");
+    }
 
-  const hashed = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
-  const user = await User.create({
-    username,
-    email,
-    password: hashed,
-    isEmailVerified: false,
-  });
+    const user = await User.create({
+      username,
+      email,
+      password: hashed,
+      isEmailVerified: false,
+    });
 
-  const verifyToken = user.createEmailVerificationToken();
-  await user.save({ validateBeforeSave: false });
+    // ✅ SEND EMAIL ONLY IF TOKEN DOES NOT EXIST OR IS EXPIRED
+    if (
+      !user.emailVerificationToken ||
+      !user.emailVerificationExpires ||
+      user.emailVerificationExpires < Date.now()
+    ) {
+      const verifyToken = user.createEmailVerificationToken();
+      await user.save({ validateBeforeSave: false });
 
-  const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+      const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
 
-   try {
-  await sendEmail({
-    to: user.email,
-    subject: "Verify your email address",
-    htmlContent: `
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "Verify your email address",
+          htmlContent: `
 <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
   Hi <strong>${user.username}</strong>,
 </p>
@@ -88,77 +94,71 @@ const usersController = {
   Thanks,<br/>Expense Tracker Team
 </p>
 `,
-  });
-  } catch (err) {
-  console.error("❌ Verification email failed:", err);
-}
+        });
+      } catch (err) {
+        console.error("❌ Verification email failed:", err);
+      }
+    }
 
-  res.status(201).json({
-    message: "Registration successful. Please verify your email.",
-  });
-}),
+    res.status(201).json({
+      message: "Registration successful. Please verify your email.",
+    });
+  }),
 
-  //EMAIL VERIFY
- verifyEmail: asyncHandler(async (req, res) => {
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
+  // EMAIL VERIFY
+  verifyEmail: asyncHandler(async (req, res) => {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
 
-  const user = await User.findOneAndUpdate(
-    {
-      emailVerificationToken: hashedToken,
-      emailVerificationExpires: { $gt: Date.now() },
-    },
-    {
-      $set: {
+    const user = await User.findOneAndUpdate(
+      {
+        emailVerificationToken: hashedToken,
+        emailVerificationExpires: { $gt: Date.now() },
+      },
+      {
         isEmailVerified: true,
         emailVerificationToken: null,
         emailVerificationExpires: null,
       },
-    },
-    { new: true }
-  );
+      { new: true }
+    );
 
-  if (!user) {
-    res.status(400);
-    throw new Error("Verification link is invalid or expired");
-  }
+    if (!user) {
+      res.status(400);
+      throw new Error("Verification link is invalid or expired");
+    }
 
-  res.json({ message: "Email verified successfully" });
-}),
+    res.json({ message: "Email verified successfully" });
+  }),
 
-  
   //! LOGIN
   login: asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+    const { email, password } = req.body;
 
-  // 1️⃣ Find user
-  const user = await User.findOne({ email });
-  if (!user) {
-    throw new Error("Invalid credentials");
-  }
+    const user = await User.findOne({ email });
+    if (!user) throw new Error("Invalid credentials");
 
-  // 2️⃣ Check password
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    throw new Error("Invalid credentials");
-  }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new Error("Invalid credentials");
 
- // 🚨 Email not verified → ALWAYS resend verification email
-if (!user.isEmailVerified) {
+    if (!user.isEmailVerified) {
+      // ✅ SEND ONLY IF TOKEN EXPIRED
+      if (
+        !user.emailVerificationToken ||
+        !user.emailVerificationExpires ||
+        user.emailVerificationExpires < Date.now()
+      ) {
+        const verifyToken = user.createEmailVerificationToken();
+        await user.save({ validateBeforeSave: false });
 
-  // 1️⃣ Always generate a fresh token (invalidates old ones)
-  const verifyToken = user.createEmailVerificationToken();
-  await user.save({ validateBeforeSave: false });
+        const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
 
-  // 2️⃣ Send latest verification email
-  const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
-
-  await sendEmail({
-    to: user.email,
-    subject: "Verify your email address",
-    htmlContent: `
+        await sendEmail({
+          to: user.email,
+          subject: "Verify your email address",
+          htmlContent: `
 <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
   Hi <strong>${user.username}</strong>,
 </p>
@@ -204,256 +204,68 @@ if (!user.isEmailVerified) {
   Thanks,<br/>Expense Tracker Team
 </p>
 `,
-  });
+        });
+      }
 
-  // 3️⃣ Block login
-  res.status(403);
-  throw new Error(
-    "Please verify your email before logging in. A fresh verification email has been sent."
-  );
-}
-
-  // 4️⃣ Email verified → LOGIN SUCCESS
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "1d",
-  });
-
-  res.json({
-    message: "Login successful",
-    token,
-    user: {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      isEmailVerified: user.isEmailVerified,
-    },
-  });
-}),
-
-
-// --- ADD THIS NEW FUNCTION ---
-  //! FORGOT PASSWORD
-    //! FORGOT PASSWORD
-  forgotPassword: asyncHandler(async (req, res) => {
-    const { email } = req.body;
-
-    if (!email) {
-      // Bad request from client
-      res.status(400);
-      throw new Error("Please provide an email address");
+      res.status(403);
+      throw new Error("Please verify your email before logging in.");
     }
 
-    const user = await User.findOne({ email });
-
-    // Security: always respond the same way to avoid leaking valid emails
-    if (!user) {
-      return res.json({ message: "If your email is registered, you will receive a reset link." });
-    }
-
-    // Generate token and persist hashed token to DB via model method
-    const resetToken = user.createPasswordResetToken();
-    await user.save({ validateBeforeSave: false });
-
-    // Interpolate the real FRONTEND URL from env (note the backticks)
-    const resetURL = `${process.env.FRONTEND_URL}/users/reset-password/${resetToken}`;
-
-    //const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email.`;
-    // --- START: CHANGE MESSAGE CONTENT TO INCLUDE HTML ---
-    const subject = "Your Password Reset Request";
-    const message = `You requested a password reset. Please use this link: ${resetURL}`;
-    
-    // HTML is highly recommended for a clickable button
-    const htmlMessage = `
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Hi <strong>${user.username}</strong>,
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  We received a request to reset your password for your Expense Tracker account.
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Please click the button below to reset your password. This link will expire in <strong>10 minutes</strong>.
-</p>
-
-<div style="text-align:center; margin:30px 0;">
-  <a href="${resetURL}" 
-     style="
-       background-color: #4CAF50; 
-       color: white; 
-       padding: 12px 25px; 
-       text-decoration: none; 
-       border-radius: 5px;
-       font-weight: bold;
-       font-family: Arial, sans-serif;
-       display: inline-block;
-       min-width: 150px;
-       width: 80%;
-       max-width: 250px;
-       box-sizing: border-box;
-     ">
-     Reset Password
-  </a>
-</div>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  If you did not request a password reset, you can safely ignore this email.
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #b71c1c;">
-  This is a secure message. Please do not share this link with anyone.
-  The link will expire after one use.
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Thanks,<br/>Expense Tracker Team
-</p>
-`;
-    // --- END: CHANGE MESSAGE CONTENT TO INCLUDE HTML ---
-
-    try {
-      await sendEmail({
-        to: user.email,
-        subject,
-        //message,
-        htmlContent: htmlMessage, // <-- PASS THE HTML CONTENT HERE
-      });
-
-      return res.json({ message: "If your email is registered, you will receive a reset link." });
-    } catch (err) {
-      // rollback token fields on failure to send email
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      await user.save({ validateBeforeSave: false });
-
-      console.error("Error sending reset email:", err);
-      res.status(500);
-      throw new Error("There was an error sending the email. Try again later.");
-    }
-  }),
-
-  // --- ADD THIS NEW FUNCTION ---
-  //! RESET PASSWORD
-  resetPassword: asyncHandler(async (req, res) => {
-    // 1. Get the token from the URL and hash it
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(req.params.token)
-      .digest("hex");
-
-    // 2. Find user by the *hashed* token and check if it's expired
-    const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: Date.now() },
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
     });
 
-    // 3. If token is invalid or expired
-    if (!user) {
-      throw new Error("Token is invalid or has expired");
-    }
-
-    // 4. Set the new password
-    const { password } = req.body;
-    const salt = await bcrypt.genSalt(10);
-    const hashed = await bcrypt.hash(password, salt);
-    
-    user.password = hashed;
-    user.passwordResetToken = undefined; // Invalidate the token
-    user.passwordResetExpires = undefined; // Invalidate the token
-    await user.save();
-
-    res.json({ message: "Password reset successfully. Please login." });
-  }),
-
-  //! PROFILE
-  profile: asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user.id);
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
     res.json({
+      message: "Login successful",
+      token,
       user: {
         id: user._id,
         username: user.username,
         email: user.email,
+        isEmailVerified: user.isEmailVerified,
       },
     });
   }),
 
-  //! CHANGE PASSWORD
-  changeUserPassword: asyncHandler(async (req, res) => {
-    const { newPassword } = req.body;
-
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-
-    await user.save({ validateBeforeSave: false });
-
-    res.json({ message: "Password changed successfully" });
-  }),
-
   //! UPDATE PROFILE
-updateUserProfile: asyncHandler(async (req, res) => {
+  updateUserProfile: asyncHandler(async (req, res) => {
     const { email, username } = req.body;
-    const userId = req.user.id;
+    const user = await User.findById(req.user.id);
 
-    // 1. Check if the user exists
-    let user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
 
-    if (!user) {
-        throw new Error("User not found");
-    }
-    
-    // --- NEW: Pre-validation to prevent E11000 error ---
-
-    // 2. Check for duplicate email (excluding the current user)
     if (email && email !== user.email) {
-        const emailExists = await User.findOne({ email });
-        if (emailExists) {
-            // Throw an error that will be caught by asyncHandler/error middleware
-            res.status(409); // 409 Conflict
-            throw new Error("This email is already taken by another user.");
-        }
-    }
+      if (await User.findOne({ email })) {
+        res.status(409);
+        throw new Error("This email is already taken by another user.");
+      }
 
-    // 3. Check for duplicate username (excluding the current user)
-    if (username && username !== user.username) {
-        const usernameExists = await User.findOne({ username });
-        if (usernameExists) {
-            // Throw an error that will be caught by asyncHandler/error middleware
-            res.status(409); // 409 Conflict
-            throw new Error("This username is already taken by another user.");
-        }
-    }
-    
-    // --- End of new checks ---
+      user.email = email;
+      user.isEmailVerified = false;
 
-    // 4. Safely apply and save the updates
-    // Use the document's save method instead of findByIdAndUpdate to ensure validation runs
-    //if (email) user.email = email;
-    if (email && email !== user.email) {
-    user.email = email;
-    user.isEmailVerified = false;
-    const verifyToken = user.createEmailVerificationToken();
-    await user.save({ validateBeforeSave: false });
-   const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
-  await sendEmail({
-    to: email,
-    subject: "Verify your new email",
-    htmlContent: `<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
+      // ✅ SEND ONLY IF TOKEN EXPIRED
+      if (
+        !user.emailVerificationToken ||
+        !user.emailVerificationExpires ||
+        user.emailVerificationExpires < Date.now()
+      ) {
+        const verifyToken = user.createEmailVerificationToken();
+        await user.save({ validateBeforeSave: false });
+
+        const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+
+        await sendEmail({
+          to: email,
+          subject: "Verify your new email",
+          htmlContent: `
+<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
   Hi <strong>${user.username}</strong>,
 </p>
 
 <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
   Please click the button below to verify your Email. This link will expire in <strong>10 minutes</strong>.
 </p>
+
 <div style="text-align:center; margin:30px 0;">
   <a href="${verifyURL}" 
      style="
@@ -473,23 +285,165 @@ updateUserProfile: asyncHandler(async (req, res) => {
      Verify Email
   </a>
 </div>
+
 <p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
   Thanks,<br/>Expense Tracker Team
-</p>`,
-  });
-}
+</p>
+`,
+        });
+      }
+    }
 
     if (username) user.username = username;
-    
-    const updatedUser = await user.save(); 
+
+    const updatedUser = await user.save();
 
     res.json({
-        message: "Profile updated successfully",
-        user: {
-            id: updatedUser._id,
-            username: updatedUser.username,
-            email: updatedUser.email,
-        },
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+      },
+    });
+  }),
+};
+
+module.exports = usersController;      }
+    }
+
+    res.status(201).json({
+      message: "Registration successful. Please verify your email.",
+    });
+  }),
+
+  //! ================= EMAIL VERIFY =================
+  verifyEmail: asyncHandler(async (req, res) => {
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = await User.findOneAndUpdate(
+      {
+        emailVerificationToken: hashedToken,
+        emailVerificationExpires: { $gt: Date.now() },
+      },
+      {
+        isEmailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      res.status(400);
+      throw new Error("Verification link is invalid or expired");
+    }
+
+    res.json({ message: "Email verified successfully" });
+  }),
+
+  //! ================= LOGIN =================
+  login: asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) throw new Error("Invalid credentials");
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new Error("Invalid credentials");
+
+    // 🚫 BLOCK LOGIN IF EMAIL NOT VERIFIED
+    if (!user.isEmailVerified) {
+
+      // ✅ SEND EMAIL ONLY IF TOKEN EXPIRED
+      if (
+        !user.emailVerificationToken ||
+        !user.emailVerificationExpires ||
+        user.emailVerificationExpires < Date.now()
+      ) {
+        const verifyToken = user.createEmailVerificationToken();
+        await user.save({ validateBeforeSave: false });
+
+        const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+
+        await sendEmail({
+          to: user.email,
+          subject: "Verify your email address",
+          htmlContent: `YOUR_HTML_SAME_AS_YOURS`,
+        });
+      }
+
+      res.status(403);
+      throw new Error(
+        "Please verify your email before logging in. Check your inbox."
+      );
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        isEmailVerified: user.isEmailVerified,
+      },
+    });
+  }),
+
+  //! ================= UPDATE PROFILE =================
+  updateUserProfile: asyncHandler(async (req, res) => {
+    const { email, username } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) throw new Error("User not found");
+
+    if (email && email !== user.email) {
+      if (await User.findOne({ email })) {
+        res.status(409);
+        throw new Error("This email is already taken.");
+      }
+
+      user.email = email;
+      user.isEmailVerified = false;
+
+      // ✅ SEND ONLY IF TOKEN EXPIRED
+      if (
+        !user.emailVerificationToken ||
+        !user.emailVerificationExpires ||
+        user.emailVerificationExpires < Date.now()
+      ) {
+        const verifyToken = user.createEmailVerificationToken();
+        await user.save({ validateBeforeSave: false });
+
+        const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+
+        await sendEmail({
+          to: email,
+          subject: "Verify your new email",
+          htmlContent: `YOUR_HTML_SAME_AS_YOURS`,
+        });
+      }
+    }
+
+    if (username) user.username = username;
+
+    const updatedUser = await user.save();
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser._id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+      },
     });
   }),
 };
