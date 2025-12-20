@@ -1,15 +1,41 @@
 const express = require("express");
-const isAuthenticated = require("../middlewares/isAuth");
-const transactionController = require("../controllers/transactionCtrl");
-
 const transactionRouter = express.Router();
 
-transactionRouter.post("/transactions/create", isAuthenticated, transactionController.create);
+const isAuthenticated = require("../middlewares/isAuth");
+const emailVerifiedOnly = require("../middlewares/emailVerifiedOnly");
 
-transactionRouter.get("/transactions/lists", isAuthenticated, transactionController.getFilteredTransactions);
+const transactionController = require("../controllers/transactionCtrl");
 
-transactionRouter.put("/transactions/update/:id", isAuthenticated, transactionController.update);
+// 🔐 CREATE TRANSACTION (email must be verified)
+transactionRouter.post(
+  "/transactions/create",
+  isAuthenticated,
+  emailVerifiedOnly,
+  transactionController.create
+);
 
-transactionRouter.delete("/transactions/delete/:id", isAuthenticated, transactionController.delete);
+// 🔐 GET TRANSACTIONS (email must be verified)
+transactionRouter.get(
+  "/transactions/lists",
+  isAuthenticated,
+  emailVerifiedOnly,
+  transactionController.getFilteredTransactions
+);
+
+// 🔐 UPDATE TRANSACTION (email must be verified)
+transactionRouter.put(
+  "/transactions/update/:id",
+  isAuthenticated,
+  emailVerifiedOnly,
+  transactionController.update
+);
+
+// 🔐 DELETE TRANSACTION (email must be verified)
+transactionRouter.delete(
+  "/transactions/delete/:id",
+  isAuthenticated,
+  emailVerifiedOnly,
+  transactionController.delete
+);
 
 module.exports = transactionRouter;
