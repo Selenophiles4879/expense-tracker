@@ -13,7 +13,7 @@ const app = express();
 //!Connect to mongodb
 mongoose
   //.connect("mongodb://localhost:27017/mern-expenses")
-  .connect(process.env.DATABASE_URL)
+  .connect(process.env.FRONTEND_URL)
   .then(() => console.log("DB Connected"))
   //.catch((e) => console.log(e));
 .catch((error) => console.error("DB Connection Error:", error));
