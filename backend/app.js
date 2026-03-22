@@ -24,7 +24,7 @@ mongoose.connection.once("open", () => {
 
 // Allow your specific Netlify frontend to access the backend
 const corsOptions = {
-  origin: 'https://',
+  origin: process.env.BACKEND_URL,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true // Allow cookies if you use them
