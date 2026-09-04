@@ -1,10 +1,11 @@
+
 import axios from "axios";
 import { BASE_URL } from "../../utils/url";
 import { getUserFromStorage } from "../../utils/getUserFromStorage";
 
 const getToken = () => getUserFromStorage();
 
-// ADD TRANSACTION
+//! ADD TRANSACTION
 export const addTransactionAPI = async ({
   type,
   category,
@@ -14,17 +15,24 @@ export const addTransactionAPI = async ({
 }) => {
   const response = await axios.post(
     `${BASE_URL}/transactions/create`,
-    { type, category, date, description, amount },
+    {
+      type,
+      category,
+      date,
+      description,
+      amount,
+    },
     {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
     }
   );
+
   return response.data;
 };
 
-// DELETE TRANSACTION
+//! DELETE TRANSACTION
 export const deleteTransactionAPI = async (id) => {
   const response = await axios.delete(
     `${BASE_URL}/transactions/delete/${id}`,
@@ -34,10 +42,11 @@ export const deleteTransactionAPI = async (id) => {
       },
     }
   );
+
   return response.data;
 };
 
-// UPDATE TRANSACTION
+//! UPDATE TRANSACTION
 export const updateTransactionAPI = async ({
   id,
   type,
@@ -48,31 +57,44 @@ export const updateTransactionAPI = async ({
 }) => {
   const response = await axios.put(
     `${BASE_URL}/transactions/update/${id}`,
-    { type, category, date, description, amount },
+    {
+      type,
+      category,
+      date,
+      description,
+      amount,
+    },
     {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
     }
   );
+
   return response.data;
 };
 
-// LIST TRANSACTIONS
+//! LIST TRANSACTIONS
 export const listTransactionsAPI = async ({
   category,
   type,
   startDate,
   endDate,
-}) => {
+} = {}) => {
   const response = await axios.get(
     `${BASE_URL}/transactions/lists`,
     {
-      params: { category, type, startDate, endDate },
+      params: {
+        category,
+        type,
+        startDate,
+        endDate,
+      },
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
     }
   );
+
   return response.data;
 };
