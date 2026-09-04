@@ -6,7 +6,7 @@ const emailVerifiedOnly = require("../middlewares/emailVerifiedOnly");
 
 const transactionController = require("../controllers/transactionCtrl");
 
-// 🔐 CREATE TRANSACTION (email must be verified)
+// CREATE TRANSACTION
 transactionRouter.post(
   "/transactions/create",
   isAuthenticated,
@@ -14,7 +14,7 @@ transactionRouter.post(
   transactionController.create
 );
 
-// 🔐 GET TRANSACTIONS (email must be verified)
+// GET TRANSACTIONS
 transactionRouter.get(
   "/transactions/lists",
   isAuthenticated,
@@ -22,7 +22,7 @@ transactionRouter.get(
   transactionController.getFilteredTransactions
 );
 
-// 🔐 UPDATE TRANSACTION (email must be verified)
+// UPDATE TRANSACTION
 transactionRouter.put(
   "/transactions/update/:id",
   isAuthenticated,
@@ -30,7 +30,7 @@ transactionRouter.put(
   transactionController.update
 );
 
-// 🔐 DELETE TRANSACTION (email must be verified)
+// DELETE TRANSACTION
 transactionRouter.delete(
   "/transactions/delete/:id",
   isAuthenticated,
