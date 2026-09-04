@@ -11,7 +11,7 @@ const transactionController = {
       throw new Error("Type, amount, and date are required");
     }
 
-    // --- FIX 1: Save the transaction with the logged-in user's ID ---
+    //Save the transaction with the logged-in user's ID
     const transaction = await Transaction.create({
       user: req.user.id, // This was missing
       type,
@@ -28,7 +28,7 @@ const transactionController = {
   getFilteredTransactions: asyncHandler(async (req, res) => {
     const { startDate, endDate, type, category } = req.query;
 
-    // --- FIX 2: Create a filter that ALWAYS includes the user's ID ---
+    // Create a filter that ALWAYS includes the user's ID
     let filters = { user: req.user.id }; // This was missing
 
     if (startDate) filters.date = { ...filters.date, $gte: new Date(startDate) };
@@ -52,7 +52,7 @@ const transactionController = {
       throw new Error("Transaction not found");
     }
 
-    // --- FIX 3: Add an ownership check ---
+    // Add an ownership check
     // Make sure the transaction's user is the same as the logged-in user
     if (transaction.user.toString() !== req.user.id) {
       res.status(401);
@@ -83,7 +83,7 @@ const transactionController = {
       throw new Error("Transaction not found");
     }
 
-    // --- FIX 4: Add an ownership check ---
+    // Add an ownership check ---
     if (transaction.user.toString() !== req.user.id) {
       res.status(401);
       throw new Error("Not authorized to delete this transaction");
