@@ -1,16 +1,16 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import {
-  FaDollarSign,
-  FaCalendarAlt,
-  FaRegCommentDots,
-  FaWallet,
-} from "react-icons/fa";
+import { FaWallet } from "react-icons/fa";
 import { SiDatabricks } from "react-icons/si";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { updateCategoryAPI } from "../../services/category/categoryService";
+
+import {
+  listCategoriesAPI,
+  updateCategoryAPI,
+} from "../../services/category/categoryService";
+
 import AlertMessage from "../Alert/AlertMessage";
 
 const validationSchema = Yup.object({
@@ -21,37 +21,86 @@ const validationSchema = Yup.object({
 });
 
 const UpdateCategory = () => {
-  //Params
   const { id } = useParams();
-  console.log(id);
-  //Navigate
   const navigate = useNavigate();
 
-  // Mutation
-  const { mutateAsync, isPending, isError, error, isSuccess } = useMutation({
+  // Fetch categories
+  const {
+    data: categories,
+    isLoading,
+    isError: isFetchError,
+    error: fetchError,
+  } = useQuery({
+    queryKey: ["list-categories"],
+    queryFn: listCategoriesAPI,
+  });
+
+  // Find the category being edited
+  const category = categories?.find(
+    (category) => category._id === id
+  );
+
+  // Update mutation
+  const {
+    mutateAsync,
+    isPending,
+    isError,
+    error,
+    isSuccess,
+  } = useMutation({
     mutationFn: updateCategoryAPI,
     mutationKey: ["update-category"],
   });
 
   const formik = useFormik({
+    enableReinitialize: true,
+
     initialValues: {
-      type: "",
-      name: "",
+      type: category?.type || "",
+      name: category?.name || "",
     },
-    validationSchema, // Added validationSchema
-    onSubmit: (values) => {
-      const data = {
-        ...values,
-        id,
-      };
-      mutateAsync(data)
-        .then((data) => {
-          //redirect
-          navigate("/categories");
-        })
-        .catch((e) => console.log(e));
+
+    validationSchema,
+
+    onSubmit: async (values) => {
+      try {
+        await mutateAsync({
+          id,
+          name: values.name,
+          type: values.type,
+        });
+
+        navigate("/categories");
+      } catch (e) {
+        console.log(e);
+      }
     },
   });
+
+  if (isLoading) {
+    return <AlertMessage type="loading" message="Loading category..." />;
+  }
+
+  if (isFetchError) {
+    return (
+      <AlertMessage
+        type="error"
+        message={
+          fetchError?.response?.data?.message ||
+          "Unable to load category"
+        }
+      />
+    );
+  }
+
+  if (!category) {
+    return (
+      <AlertMessage
+        type="error"
+        message="Category not found"
+      />
+    );
+  }
 
   return (
     <form
@@ -62,24 +111,29 @@ const UpdateCategory = () => {
         <h2 className="text-2xl font-semibold text-gray-800">
           Update Category
         </h2>
-        <p className="text-gray-600">Fill in the details below.</p>
+
+        <p className="text-gray-600">
+          Edit the category details below.
+        </p>
       </div>
-      {/* Display alert message */}
+
       {isError && (
         <AlertMessage
           type="error"
           message={
             error?.response?.data?.message ||
-            "Something happened please try again later"
+            "Something happened. Please try again later."
           }
         />
       )}
+
       {isSuccess && (
         <AlertMessage
           type="success"
-          message="Category updated successfully, redirecting..."
+          message="Category updated successfully!"
         />
       )}
+
       {/* Category Type */}
       <div className="space-y-2">
         <label
@@ -89,6 +143,7 @@ const UpdateCategory = () => {
           <FaWallet className="text-blue-500" />
           <span>Type</span>
         </label>
+
         <select
           {...formik.getFieldProps("type")}
           id="type"
@@ -98,17 +153,24 @@ const UpdateCategory = () => {
           <option value="income">Income</option>
           <option value="expense">Expense</option>
         </select>
+
         {formik.touched.type && formik.errors.type && (
-          <p className="text-red-500 text-xs">{formik.errors.type}</p>
+          <p className="text-red-500 text-xs">
+            {formik.errors.type}
+          </p>
         )}
       </div>
 
       {/* Category Name */}
       <div className="flex flex-col">
-        <label htmlFor="name" className="text-gray-700 font-medium">
+        <label
+          htmlFor="name"
+          className="text-gray-700 font-medium"
+        >
           <SiDatabricks className="inline mr-2 text-blue-500" />
           Name
         </label>
+
         <input
           type="text"
           {...formik.getFieldProps("name")}
@@ -116,18 +178,32 @@ const UpdateCategory = () => {
           id="name"
           className="w-full mt-1 border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 py-2 px-3"
         />
+
         {formik.touched.name && formik.errors.name && (
-          <p className="text-red-500 text-xs italic">{formik.errors.name}</p>
+          <p className="text-red-500 text-xs italic">
+            {formik.errors.name}
+          </p>
         )}
       </div>
 
-      {/* Submit Button */}
-      <button
-        type="submit"
-        className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors duration-200 transform"
-      >
-        Update Category
-      </button>
+      {/* Buttons */}
+      <div className="flex gap-3">
+        <button
+          type="submit"
+          disabled={isPending}
+          className="mt-4 bg-blue-500 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded transition-colors duration-200"
+        >
+          {isPending ? "Updating..." : "Update Category"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/categories")}
+          className="mt-4 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors duration-200"
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   );
 };
