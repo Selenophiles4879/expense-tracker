@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FaTrash, FaEdit } from "react-icons/fa";
@@ -34,9 +33,7 @@ const TransactionList = () => {
   };
 
   //! Fetch categories
-  const {
-    data: categoriesData,
-  } = useQuery({
+  const { data: categoriesData } = useQuery({
     queryFn: listCategoriesAPI,
     queryKey: ["list-categories"],
   });
@@ -79,8 +76,12 @@ const TransactionList = () => {
   };
 
   //! Update handler
-  const handleUpdateTransaction = (id) => {
-    navigate(`/transactions/update/${id}`);
+  const handleUpdateTransaction = (transaction) => {
+    navigate(`/transactions/update/${transaction._id}`, {
+      state: {
+        transaction,
+      },
+    });
   };
 
   return (
@@ -150,8 +151,10 @@ const TransactionList = () => {
             Filtered Transactions
           </h3>
 
+          {/* LOADING */}
           {isLoading && <p>Loading transactions...</p>}
 
+          {/* ERROR */}
           {isError && (
             <p className="text-red-500">
               {error?.response?.data?.message ||
@@ -159,10 +162,14 @@ const TransactionList = () => {
             </p>
           )}
 
-          {!isLoading && !isError && transactions?.length === 0 && (
-            <p>No transactions found.</p>
-          )}
+          {/* EMPTY */}
+          {!isLoading &&
+            !isError &&
+            transactions?.length === 0 && (
+              <p>No transactions found.</p>
+            )}
 
+          {/* TRANSACTION LIST */}
           <ul className="list-disc pl-5 space-y-2">
             {transactions?.map((transaction) => (
               <li
@@ -170,10 +177,14 @@ const TransactionList = () => {
                 className="bg-white p-3 rounded-md shadow border border-gray-200 flex justify-between items-center"
               >
                 <div>
+                  {/* DATE */}
                   <span className="font-medium text-gray-600">
-                    {new Date(transaction.date).toLocaleDateString()}
+                    {new Date(
+                      transaction.date
+                    ).toLocaleDateString()}
                   </span>
 
+                  {/* TYPE */}
                   <span
                     className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       transaction.type === "income"
@@ -185,24 +196,28 @@ const TransactionList = () => {
                       transaction.type.slice(1)}
                   </span>
 
+                  {/* CATEGORY + AMOUNT */}
                   <span className="ml-2 text-gray-800">
                     {transaction.category} - $
                     {transaction.amount.toLocaleString()}
                   </span>
 
+                  {/* DESCRIPTION */}
                   <span className="text-sm text-gray-600 italic ml-2">
                     {transaction.description}
                   </span>
                 </div>
 
+                {/* ACTION BUTTONS */}
                 <div className="flex space-x-3">
                   {/* EDIT */}
                   <button
                     type="button"
                     onClick={() =>
-                      handleUpdateTransaction(transaction._id)
+                      handleUpdateTransaction(transaction)
                     }
                     className="text-blue-500 hover:text-blue-700"
+                    title="Edit transaction"
                   >
                     <FaEdit />
                   </button>
@@ -210,9 +225,12 @@ const TransactionList = () => {
                   {/* DELETE */}
                   <button
                     type="button"
-                    onClick={() => handleDelete(transaction._id)}
+                    onClick={() =>
+                      handleDelete(transaction._id)
+                    }
                     disabled={deleteMutation.isPending}
                     className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                    title="Delete transaction"
                   >
                     <FaTrash />
                   </button>
@@ -227,4 +245,3 @@ const TransactionList = () => {
 };
 
 export default TransactionList;
-
