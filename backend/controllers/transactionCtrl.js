@@ -1,19 +1,18 @@
 const asyncHandler = require("express-async-handler");
 const Transaction = require("../model/Transaction");
-const Category = require("../model/Category");
 
 const transactionController = {
   //! CREATE TRANSACTION
   create: asyncHandler(async (req, res) => {
     const { type, category, amount, date, description } = req.body;
 
-    if (!amount || !type || !date) {
+    if (!type || !amount || !date) {
+      res.status(400);
       throw new Error("Type, amount, and date are required");
     }
 
-    //Save the transaction with the logged-in user's ID
     const transaction = await Transaction.create({
-      user: req.user.id, // This was missing
+      user: req.user.id,
       type,
       category,
       amount,
@@ -28,70 +27,103 @@ const transactionController = {
   getFilteredTransactions: asyncHandler(async (req, res) => {
     const { startDate, endDate, type, category } = req.query;
 
-    // Create a filter that ALWAYS includes the user's ID
-    let filters = { user: req.user.id }; // This was missing
+    // Only get transactions belonging to logged-in user
+    const filters = {
+      user: req.user.id,
+    };
 
-    if (startDate) filters.date = { ...filters.date, $gte: new Date(startDate) };
-    if (endDate) filters.date = { ...filters.date, $lte: new Date(endDate) };
-    if (type) filters.type = type;
-    if (category) filters.category = category;
+    // Date filters
+    if (startDate || endDate) {
+      filters.date = {};
 
-    const transactions = await Transaction.find(filters).sort({ date: -1 });
+      if (startDate) {
+        filters.date.$gte = new Date(startDate);
+      }
 
-    res.json(transactions);
+      if (endDate) {
+        filters.date.$lte = new Date(endDate);
+      }
+    }
+
+    // Type filter
+    if (type) {
+      filters.type = type;
+    }
+
+    // Category filter
+    if (category && category !== "All") {
+      filters.category = category;
+    }
+
+    const transactions = await Transaction.find(filters).sort({
+      date: -1,
+    });
+
+    res.status(200).json(transactions);
   }),
 
   //! UPDATE TRANSACTION
   update: asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    const transaction = await Transaction.findById(id);
+    const { type, category, amount, date, description } = req.body;
 
-    if (!transaction) {
-      res.status(404);
-      throw new Error("Transaction not found");
-    }
-
-    // Add an ownership check
-    // Make sure the transaction's user is the same as the logged-in user
-    if (transaction.user.toString() !== req.user.id) {
-      res.status(401);
-      throw new Error("Not authorized to update this transaction");
-    }
-
-    // Update the transaction
-    const updatedTransaction = await Transaction.findByIdAndUpdate(
-      id,
-      req.body,
+    // IMPORTANT:
+    // Transaction must match BOTH:
+    // 1. transaction _id
+    // 2. logged-in user's id
+    const updatedTransaction = await Transaction.findOneAndUpdate(
       {
-        new: true, // Return the updated document
+        _id: id,
+        user: req.user.id,
+      },
+      {
+        type,
+        category,
+        amount,
+        date,
+        description,
+      },
+      {
+        new: true,
         runValidators: true,
       }
     );
 
-    res.json(updatedTransaction);
+    if (!updatedTransaction) {
+      res.status(404);
+      throw new Error(
+        "Transaction not found or you are not authorized to update it"
+      );
+    }
+
+    res.status(200).json(updatedTransaction);
   }),
 
   //! DELETE TRANSACTION
   delete: asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    const transaction = await Transaction.findById(id);
+    // IMPORTANT:
+    // Transaction must match BOTH:
+    // 1. transaction _id
+    // 2. logged-in user's id
+    const deletedTransaction = await Transaction.findOneAndDelete({
+      _id: id,
+      user: req.user.id,
+    });
 
-    if (!transaction) {
+    if (!deletedTransaction) {
       res.status(404);
-      throw new Error("Transaction not found");
+      throw new Error(
+        "Transaction not found or you are not authorized to delete it"
+      );
     }
 
-    // Add an ownership check ---
-    if (transaction.user.toString() !== req.user.id) {
-      res.status(401);
-      throw new Error("Not authorized to delete this transaction");
-    }
-
-    await Transaction.findByIdAndDelete(id);
-
-    res.json({ message: "Transaction removed successfully" });
+    res.status(200).json({
+      message: "Transaction removed successfully",
+      transaction: deletedTransaction,
+    });
   }),
 };
 
