@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -13,6 +17,7 @@ import { listCategoriesAPI } from "../../services/category/categoryService";
 
 const TransactionList = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   //! Selected transaction for displaying items
   const [selectedTransactionId, setSelectedTransactionId] =
@@ -59,9 +64,13 @@ const TransactionList = () => {
     mutationFn: (id) => deleteTransactionAPI(id),
 
     onSuccess: () => {
-      setSelectedTransactionId(null);
-      refetch();
-    },
+  // Refresh transaction list and Dashboard chart
+  queryClient.invalidateQueries({
+    queryKey: ["list-transactions"],
+  });
+
+  refetch();
+},
 
     onError: (error) => {
       console.error(
