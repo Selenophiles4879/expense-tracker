@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -8,6 +8,8 @@ import {
   FaCalendarAlt,
   FaRegCommentDots,
   FaWallet,
+  FaPlus,
+  FaTrash,
 } from "react-icons/fa";
 
 import { listCategoriesAPI } from "../../services/category/categoryService";
@@ -33,6 +35,15 @@ const validationSchema = Yup.object({
   date: Yup.date().required("Date is required"),
 
   description: Yup.string(),
+
+  items: Yup.array().of(
+    Yup.object({
+      name: Yup.string().required("Item name is required"),
+      price: Yup.number()
+        .required("Item price is required")
+        .positive("Item price must be positive"),
+    })
+  ),
 });
 
 const TransactionForm = () => {
@@ -44,6 +55,11 @@ const TransactionForm = () => {
 
   //! Determine whether this is CREATE or UPDATE
   const isEditMode = Boolean(transaction);
+
+  //! Controls whether the item section is visible
+  const [showItems, setShowItems] = useState(
+    Boolean(transaction?.items?.length)
+  );
 
   //! Fetch categories
   const {
@@ -59,7 +75,8 @@ const TransactionForm = () => {
     mutationFn: addTransactionAPI,
 
     onSuccess: () => {
-      navigate("/transactions");
+      formik.resetForm();
+      setShowItems(false);
     },
 
     onError: (error) => {
@@ -75,7 +92,8 @@ const TransactionForm = () => {
     mutationFn: updateTransactionAPI,
 
     onSuccess: () => {
-      navigate("/transactions");
+      formik.resetForm();
+      setShowItems(false);
     },
 
     onError: (error) => {
@@ -98,21 +116,46 @@ const TransactionForm = () => {
         ? new Date(transaction.date).toISOString().split("T")[0]
         : "",
       description: transaction?.description || "",
+      items: transaction?.items || [],
     },
 
     validationSchema,
 
     onSubmit: async (values) => {
       try {
+        const items =
+          values.type === "expense"
+            ? values.items.map((item) => ({
+                name: item.name,
+                price: Number(item.price),
+              }))
+            : [];
+
+        const itemTotal = items.reduce(
+          (total, item) => total + Number(item.price || 0),
+          0
+        );
+
+        const finalAmount =
+          values.type === "expense" && items.length > 0
+            ? itemTotal
+            : Number(values.amount);
+
+        const transactionData = {
+          ...values,
+          amount: finalAmount,
+          items,
+        };
+
         if (isEditMode) {
           // UPDATE
           await updateMutation.mutateAsync({
             id: transaction._id,
-            ...values,
+            ...transactionData,
           });
         } else {
           // CREATE
-          await addMutation.mutateAsync(values);
+          await addMutation.mutateAsync(transactionData);
         }
       } catch (error) {
         console.error(error);
@@ -128,6 +171,48 @@ const TransactionForm = () => {
 
   const error =
     addMutation.error || updateMutation.error;
+
+  //! Add new item
+  const handleAddItem = () => {
+    setShowItems(true);
+
+    formik.setFieldValue("items", [
+      ...formik.values.items,
+      {
+        name: "",
+        price: "",
+      },
+    ]);
+  };
+
+  //! Remove item
+  const handleRemoveItem = (index) => {
+    const updatedItems = formik.values.items.filter(
+      (_, itemIndex) => itemIndex !== index
+    );
+
+    formik.setFieldValue("items", updatedItems);
+
+    if (updatedItems.length === 0) {
+      setShowItems(false);
+    }
+  };
+
+  //! Calculate item total
+  const itemTotal = formik.values.items.reduce(
+    (total, item) => total + Number(item.price || 0),
+    0
+  );
+
+  //! Automatically use item total as expense amount
+  React.useEffect(() => {
+    if (
+      formik.values.type === "expense" &&
+      formik.values.items.length > 0
+    ) {
+      formik.setFieldValue("amount", itemTotal, false);
+    }
+  }, [itemTotal, formik.values.type]);
 
   return (
     <form
@@ -217,8 +302,19 @@ const TransactionForm = () => {
           {...formik.getFieldProps("amount")}
           id="amount"
           placeholder="Amount"
+          readOnly={
+            formik.values.type === "expense" &&
+            formik.values.items.length > 0
+          }
           className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
         />
+
+        {formik.values.type === "expense" &&
+          formik.values.items.length > 0 && (
+            <p className="text-xs text-gray-500">
+              Amount is calculated from the item prices.
+            </p>
+          )}
 
         {formik.touched.amount && formik.errors.amount && (
           <p className="text-red-500 text-xs italic">
@@ -226,6 +322,110 @@ const TransactionForm = () => {
           </p>
         )}
       </div>
+
+      {/* ADD ITEM */}
+      {formik.values.type === "expense" && (
+        <div>
+          {!showItems && (
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded"
+            >
+              <FaPlus />
+              Add Item
+            </button>
+          )}
+
+          {/* ITEMS */}
+          {showItems && (
+            <div className="space-y-4 border border-gray-200 rounded-lg p-4">
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold text-gray-800">
+                  Expense Items
+                </h3>
+
+                <button
+                  type="button"
+                  onClick={handleAddItem}
+                  className="flex items-center gap-1 text-green-600 hover:text-green-800 font-medium"
+                >
+                  <FaPlus />
+                  Add Item
+                </button>
+              </div>
+
+              {formik.values.items.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex gap-2 items-start"
+                >
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Item name"
+                      value={item.name}
+                      onChange={(e) =>
+                        formik.setFieldValue(
+                          `items[${index}].name`,
+                          e.target.value
+                        )
+                      }
+                      className="w-full border border-gray-300 rounded-md py-2 px-3"
+                    />
+
+                    {formik.touched.items?.[index]?.name &&
+                      formik.errors.items?.[index]?.name && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {formik.errors.items[index].name}
+                        </p>
+                      )}
+                  </div>
+
+                  <div className="w-28">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Price"
+                      value={item.price}
+                      onChange={(e) =>
+                        formik.setFieldValue(
+                          `items[${index}].price`,
+                          e.target.value
+                        )
+                      }
+                      className="w-full border border-gray-300 rounded-md py-2 px-3"
+                    />
+
+                    {formik.touched.items?.[index]?.price &&
+                      formik.errors.items?.[index]?.price && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {formik.errors.items[index].price}
+                        </p>
+                      )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveItem(index)}
+                    className="text-red-500 hover:text-red-700 py-2"
+                    title="Remove item"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+
+              <div className="flex justify-end border-t pt-3">
+                <span className="font-semibold text-gray-800">
+                  Total: ${itemTotal.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* CATEGORY */}
       <div className="flex flex-col space-y-1">
