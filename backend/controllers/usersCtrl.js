@@ -141,10 +141,18 @@ const usersController = {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) throw new Error("Invalid credentials");
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new Error("Invalid credentials");
+if (!user) {
+  res.status(404);
+  throw new Error("User not found. Please check your email.");
+}
+
+const isMatch = await bcrypt.compare(password, user.password);
+
+if (!isMatch) {
+  res.status(401);
+  throw new Error("Incorrect password. Please try again.");
+};
 
     if (!user.isEmailVerified) {
       // ✅ SEND ONLY IF TOKEN EXPIRED
