@@ -1,4 +1,3 @@
-```jsx
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
@@ -625,4 +624,3 @@ const TransactionForm = () => {
 };
 
 export default TransactionForm;
-```
