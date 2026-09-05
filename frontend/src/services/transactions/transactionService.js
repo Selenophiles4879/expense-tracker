@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import { BASE_URL } from "../../utils/url";
 import { getUserFromStorage } from "../../utils/getUserFromStorage";
@@ -12,6 +11,7 @@ export const addTransactionAPI = async ({
   date,
   description,
   amount,
+  items = [],
 }) => {
   const response = await axios.post(
     `${BASE_URL}/transactions/create`,
@@ -21,6 +21,7 @@ export const addTransactionAPI = async ({
       date,
       description,
       amount,
+      items,
     },
     {
       headers: {
@@ -54,6 +55,7 @@ export const updateTransactionAPI = async ({
   date,
   description,
   amount,
+  items = [],
 }) => {
   const response = await axios.put(
     `${BASE_URL}/transactions/update/${id}`,
@@ -63,6 +65,7 @@ export const updateTransactionAPI = async ({
       date,
       description,
       amount,
+      items,
     },
     {
       headers: {
