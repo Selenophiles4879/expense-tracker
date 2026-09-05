@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   FaDollarSign,
   FaCalendarAlt,
@@ -70,6 +70,7 @@ const emptyFormValues = {
 const TransactionForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   //! Transaction passed from TransactionList
   const transaction = location.state?.transaction;
@@ -96,6 +97,10 @@ const TransactionForm = () => {
     mutationFn: addTransactionAPI,
 
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["list-transactions"],
+      });
+
       formik.resetForm({
         values: emptyFormValues,
       });
@@ -116,6 +121,10 @@ const TransactionForm = () => {
     mutationFn: updateTransactionAPI,
 
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["list-transactions"],
+      });
+
       formik.resetForm({
         values: emptyFormValues,
       });
