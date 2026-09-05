@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -13,6 +13,10 @@ import { listCategoriesAPI } from "../../services/category/categoryService";
 
 const TransactionList = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  //! Selected transaction for item details
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
 
   //! Filtering state
   const [filters, setFilters] = useState({
@@ -21,9 +25,6 @@ const TransactionList = () => {
     type: "",
     category: "",
   });
-
-  //! Selected transaction
-  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
 
   //! Handle Filter Change
   const handleFilterChange = (e) => {
@@ -58,8 +59,12 @@ const TransactionList = () => {
     mutationFn: (id) => deleteTransactionAPI(id),
 
     onSuccess: () => {
-      setSelectedTransactionId(null);
+      queryClient.invalidateQueries({
+        queryKey: ["list-transactions"],
+      });
+
       refetch();
+      setSelectedTransactionId(null);
     },
 
     onError: (error) => {
@@ -86,18 +91,6 @@ const TransactionList = () => {
         transaction,
       },
     });
-  };
-
-  //! Show / hide transaction items
-  const handleTransactionClick = (transaction) => {
-    // Only expenses have items
-    if (transaction.type !== "expense") {
-      return;
-    }
-
-    setSelectedTransactionId((prev) =>
-      prev === transaction._id ? null : transaction._id
-    );
   };
 
   return (
@@ -187,156 +180,116 @@ const TransactionList = () => {
 
           {/* TRANSACTION LIST */}
           <ul className="list-disc pl-5 space-y-2">
-            {transactions?.map((transaction) => {
-              const isSelected =
-                selectedTransactionId === transaction._id;
+            {transactions?.map((transaction) => (
+              <li
+                key={transaction._id}
+                onClick={() =>
+                  transaction.type === "expense" &&
+                  transaction.items?.length &&
+                  setSelectedTransactionId((prev) =>
+                    prev === transaction._id ? null : transaction._id
+                  )
+                }
+                className={`bg-white p-3 rounded-md shadow border border-gray-200 flex justify-between items-center ${
+                  transaction.type === "expense" && transaction.items?.length
+                    ? "cursor-pointer"
+                    : ""
+                }`}
+              >
+                <div>
+                  {/* DATE */}
+                  <span className="font-medium text-gray-600">
+                    {new Date(
+                      transaction.date
+                    ).toLocaleDateString()}
+                  </span>
 
-              return (
-                <React.Fragment key={transaction._id}>
-                  {/* TRANSACTION */}
-                  <li
-                    onClick={() => handleTransactionClick(transaction)}
-                    className={`bg-white p-3 rounded-md shadow border border-gray-200 flex justify-between items-center ${
-                      transaction.type === "expense"
-                        ? "cursor-pointer hover:bg-gray-50"
-                        : ""
+                  {/* TYPE */}
+                  <span
+                    className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      transaction.type === "income"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
                     }`}
                   >
-                    <div>
-                      {/* DATE */}
-                      <span className="font-medium text-gray-600">
-                        {new Date(
-                          transaction.date
-                        ).toLocaleDateString()}
-                      </span>
+                    {transaction.type.charAt(0).toUpperCase() +
+                      transaction.type.slice(1)}
+                  </span>
 
-                      {/* TYPE */}
-                      <span
-                        className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          transaction.type === "income"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {transaction.type.charAt(0).toUpperCase() +
-                          transaction.type.slice(1)}
-                      </span>
+                  {/* CATEGORY + AMOUNT */}
+                  <span className="ml-2 text-gray-800">
+                    {transaction.category} - $
+                    {transaction.amount.toLocaleString()}
+                  </span>
 
-                      {/* CATEGORY + AMOUNT */}
-                      <span className="ml-2 text-gray-800">
-                        {transaction.category} - $
-                        {transaction.amount.toLocaleString()}
-                      </span>
+                  {/* DESCRIPTION */}
+                  <span className="text-sm text-gray-600 italic ml-2">
+                    {transaction.description}
+                  </span>
+                </div>
 
-                      {/* DESCRIPTION */}
-                      <span className="text-sm text-gray-600 italic ml-2">
-                        {transaction.description}
-                      </span>
-                    </div>
+                {/* ACTION BUTTONS */}
+                <div className="flex space-x-3">
+                  {/* EDIT */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleUpdateTransaction(transaction);
+                    }}
+                    className="text-blue-500 hover:text-blue-700"
+                    title="Edit transaction"
+                  >
+                    <FaEdit />
+                  </button>
 
-                    {/* ACTION BUTTONS */}
-                    <div className="flex space-x-3">
-                      {/* EDIT */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleUpdateTransaction(transaction);
-                        }}
-                        className="text-blue-500 hover:text-blue-700"
-                        title="Edit transaction"
-                      >
-                        <FaEdit />
-                      </button>
+                  {/* DELETE */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(transaction._id);
+                    }}
+                    disabled={deleteMutation.isPending}
+                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                    title="Delete transaction"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              </li>
 
-                      {/* DELETE */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(transaction._id);
-                        }}
-                        disabled={deleteMutation.isPending}
-                        className="text-red-500 hover:text-red-700 disabled:opacity-50"
-                        title="Delete transaction"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </li>
-
-                  {/* ITEM DETAILS */}
-                  {isSelected &&
-                    transaction.type === "expense" && (
-                      <li className="bg-white p-4 rounded-md shadow border border-gray-200">
-                        <h4 className="font-semibold text-gray-800 mb-3">
-                          Transaction Items
-                        </h4>
-
-                        {transaction.items?.length > 0 ? (
-                          <table className="w-full text-left">
-                            <thead>
-                              <tr className="border-b border-gray-300">
-                                <th className="py-2">Item</th>
-                                <th className="py-2">Price</th>
-                                <th className="py-2">Total</th>
-                              </tr>
-                            </thead>
-
-                            <tbody>
-                              {transaction.items.map((item, index) => (
-                                <tr
-                                  key={index}
-                                  className="border-b border-gray-200"
-                                >
-                                  <td className="py-2">
-                                    {item.name}
-                                  </td>
-
-                                  <td className="py-2">
-                                    $
-                                    {Number(
-                                      item.price
-                                    ).toLocaleString()}
-                                  </td>
-
-                                  <td className="py-2">
-                                    $
-                                    {Number(
-                                      item.price
-                                    ).toLocaleString()}
-                                  </td>
-                                </tr>
-                              ))}
-
-                              {/* GRAND TOTAL */}
-                              <tr className="font-semibold">
-                                <td className="py-2">Total</td>
-                                <td></td>
-                                <td className="py-2">
-                                  $
-                                  {transaction.items
-                                    .reduce(
-                                      (total, item) =>
-                                        total +
-                                        Number(item.price || 0),
-                                      0
-                                    )
-                                    .toLocaleString()}
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        ) : (
-                          <p className="text-gray-500">
-                            No items found for this transaction.
-                          </p>
-                        )}
-                      </li>
-                    )}
-                </React.Fragment>
-              );
-            })}
+              {selectedTransactionId === transaction._id &&
+                transaction.type === "expense" &&
+                transaction.items?.length > 0 && (
+                  <div className="ml-5 mt-2 bg-gray-50 rounded-md border border-gray-200 overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr>
+                          <th className="px-4 py-2 border">S.No.</th>
+                          <th className="px-4 py-2 border">Item</th>
+                          <th className="px-4 py-2 border">Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transaction.items.map((item, index) => (
+                          <tr key={item._id || index}>
+                            <td className="px-4 py-2 border">
+                              {index + 1}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              {item.name}
+                            </td>
+                            <td className="px-4 py-2 border">
+                              ${Number(item.price).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+            ))}
           </ul>
         </div>
       </div>
