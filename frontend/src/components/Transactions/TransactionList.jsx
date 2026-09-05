@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { FaTrash, FaEdit } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -13,10 +13,10 @@ import { listCategoriesAPI } from "../../services/category/categoryService";
 
 const TransactionList = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  //! Selected transaction for item details
-  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+  //! Selected transaction for displaying items
+  const [selectedTransactionId, setSelectedTransactionId] =
+    useState(null);
 
   //! Filtering state
   const [filters, setFilters] = useState({
@@ -59,12 +59,8 @@ const TransactionList = () => {
     mutationFn: (id) => deleteTransactionAPI(id),
 
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["list-transactions"],
-      });
-
-      refetch();
       setSelectedTransactionId(null);
+      refetch();
     },
 
     onError: (error) => {
@@ -77,7 +73,11 @@ const TransactionList = () => {
 
   //! Delete handler
   const handleDelete = (id) => {
-    if (!window.confirm("Are you sure you want to delete this transaction?")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this transaction?"
+      )
+    ) {
       return;
     }
 
@@ -91,6 +91,22 @@ const TransactionList = () => {
         transaction,
       },
     });
+  };
+
+  //! Handle transaction click
+  const handleTransactionClick = (transaction) => {
+    // Only expense transactions with items can be expanded
+    if (
+      transaction.type !== "expense" ||
+      !transaction.items?.length
+    ) {
+      return;
+    }
+
+    // Clicking the same transaction collapses it
+    setSelectedTransactionId((prev) =>
+      prev === transaction._id ? null : transaction._id
+    );
   };
 
   return (
@@ -182,13 +198,10 @@ const TransactionList = () => {
           <ul className="list-disc pl-5 space-y-2">
             {transactions?.map((transaction) => (
               <React.Fragment key={transaction._id}>
+                {/* TRANSACTION */}
                 <li
                   onClick={() =>
-                    transaction.type === "expense" &&
-                    transaction.items?.length &&
-                    setSelectedTransactionId((prev) =>
-                      prev === transaction._id ? null : transaction._id
-                    )
+                    handleTransactionClick(transaction)
                   }
                   className={`bg-white p-3 rounded-md shadow border border-gray-200 flex justify-between items-center ${
                     transaction.type === "expense" &&
@@ -260,43 +273,76 @@ const TransactionList = () => {
                   </div>
                 </li>
 
-                {/* EXPENSE ITEM DETAILS */}
+                {/* EXPANDED ITEM DETAILS */}
                 {selectedTransactionId === transaction._id &&
                   transaction.type === "expense" &&
                   transaction.items?.length > 0 && (
-                    <li className="list-none ml-5 mt-2">
-                      <div className="bg-gray-50 rounded-md border border-gray-200 overflow-hidden">
-                        <table className="w-full text-left border-collapse">
+                    <li className="list-none">
+                      <div className="bg-white p-3 rounded-md shadow border border-gray-200">
+                        <table className="w-full text-sm text-gray-800">
                           <thead>
-                            <tr>
-                              <th className="px-4 py-2 border">
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left py-2 font-medium text-gray-600">
                                 S.No.
                               </th>
-                              <th className="px-4 py-2 border">
+
+                              <th className="text-left py-2 font-medium text-gray-600">
                                 Item
                               </th>
-                              <th className="px-4 py-2 border">
+
+                              <th className="text-right py-2 font-medium text-gray-600">
                                 Price
                               </th>
                             </tr>
                           </thead>
 
                           <tbody>
-                            {transaction.items.map((item, index) => (
-                              <tr key={item._id || index}>
-                                <td className="px-4 py-2 border">
-                                  {index + 1}
-                                </td>
+                            {/* ITEMS */}
+                            {transaction.items.map(
+                              (item, index) => (
+                                <tr
+                                  key={item._id || index}
+                                  className="border-b border-gray-100"
+                                >
+                                  <td className="py-2">
+                                    {index + 1}
+                                  </td>
 
-                                <td className="px-4 py-2 border">
-                                  {item.name}
-                                </td>
+                                  <td className="py-2">
+                                    {item.name}
+                                  </td>
 
-                                <td className="px-4 py-2 border">
-                                  ${Number(item.price).toLocaleString()}
-                                </td>
-                              </tr>
-                            ))}
+                                  <td className="py-2 text-right">
+                                    $
+                                    {Number(
+                                      item.price
+                                    ).toLocaleString()}
+                                  </td>
+                                </tr>
+                              )
+                            )}
+
+                            {/* TOTAL */}
+                            <tr>
+                              <td
+                                colSpan="2"
+                                className="pt-3 font-semibold text-gray-800"
+                              >
+                                Total
+                              </td>
+
+                              <td className="pt-3 text-right font-semibold text-gray-800">
+                                $
+                                {transaction.items
+                                  .reduce(
+                                    (total, item) =>
+                                      total +
+                                      Number(item.price || 0),
+                                    0
+                                  )
+                                  .toLocaleString()}
+                              </td>
+                            </tr>
                           </tbody>
                         </table>
                       </div>
