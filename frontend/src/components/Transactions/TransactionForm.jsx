@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -26,9 +26,14 @@ const validationSchema = Yup.object({
     .required("Transaction type is required")
     .oneOf(["income", "expense"]),
 
-  amount: Yup.number()
-    .required("Amount is required")
-    .positive("Amount must be positive"),
+  amount: Yup.number().when("type", {
+    is: "income",
+    then: (schema) =>
+      schema
+        .required("Amount is required")
+        .positive("Amount must be positive"),
+    otherwise: (schema) => schema.notRequired(),
+  }),
 
   category: Yup.string().required("Category is required"),
 
@@ -36,15 +41,31 @@ const validationSchema = Yup.object({
 
   description: Yup.string(),
 
-  items: Yup.array().of(
-    Yup.object({
-      name: Yup.string().required("Item name is required"),
-      price: Yup.number()
-        .required("Item price is required")
-        .positive("Item price must be positive"),
-    })
-  ),
+  items: Yup.array().when("type", {
+    is: "expense",
+    then: (schema) =>
+      schema
+        .min(1, "At least one item is required")
+        .of(
+          Yup.object({
+            name: Yup.string().required("Item name is required"),
+            price: Yup.number()
+              .required("Item price is required")
+              .positive("Item price must be positive"),
+          })
+        ),
+    otherwise: (schema) => schema.notRequired(),
+  }),
 });
+
+const emptyFormValues = {
+  type: "",
+  amount: "",
+  category: "",
+  date: "",
+  description: "",
+  items: [],
+};
 
 const TransactionForm = () => {
   const navigate = useNavigate();
@@ -75,7 +96,10 @@ const TransactionForm = () => {
     mutationFn: addTransactionAPI,
 
     onSuccess: () => {
-      formik.resetForm();
+      formik.resetForm({
+        values: emptyFormValues,
+      });
+
       setShowItems(false);
     },
 
@@ -92,7 +116,10 @@ const TransactionForm = () => {
     mutationFn: updateTransactionAPI,
 
     onSuccess: () => {
-      formik.resetForm();
+      formik.resetForm({
+        values: emptyFormValues,
+      });
+
       setShowItems(false);
     },
 
@@ -126,24 +153,26 @@ const TransactionForm = () => {
         const items =
           values.type === "expense"
             ? values.items.map((item) => ({
-                name: item.name,
+                name: item.name.trim(),
                 price: Number(item.price),
               }))
             : [];
 
+        //! Calculate expense amount from items
         const itemTotal = items.reduce(
           (total, item) => total + Number(item.price || 0),
           0
         );
 
-        const finalAmount =
-          values.type === "expense" && items.length > 0
-            ? itemTotal
-            : Number(values.amount);
-
         const transactionData = {
-          ...values,
-          amount: finalAmount,
+          type: values.type,
+          category: values.category,
+          date: values.date,
+          description: values.description,
+          amount:
+            values.type === "expense"
+              ? itemTotal
+              : Number(values.amount),
           items,
         };
 
@@ -163,6 +192,31 @@ const TransactionForm = () => {
     },
   });
 
+  //! Hide/clear items when transaction type changes
+  useEffect(() => {
+    if (formik.values.type !== "expense") {
+      if (formik.values.items.length > 0) {
+        formik.setFieldValue("items", [], false);
+      }
+
+      setShowItems(false);
+    }
+  }, [formik.values.type]);
+
+  //! Hide/clear items when category is removed
+  useEffect(() => {
+    if (
+      formik.values.type === "expense" &&
+      !formik.values.category
+    ) {
+      if (formik.values.items.length > 0) {
+        formik.setFieldValue("items", [], false);
+      }
+
+      setShowItems(false);
+    }
+  }, [formik.values.category, formik.values.type]);
+
   const isPending =
     addMutation.isPending || updateMutation.isPending;
 
@@ -174,6 +228,13 @@ const TransactionForm = () => {
 
   //! Add new item
   const handleAddItem = () => {
+    if (
+      formik.values.type !== "expense" ||
+      !formik.values.category
+    ) {
+      return;
+    }
+
     setShowItems(true);
 
     formik.setFieldValue("items", [
@@ -203,16 +264,6 @@ const TransactionForm = () => {
     (total, item) => total + Number(item.price || 0),
     0
   );
-
-  //! Automatically use item total as expense amount
-  React.useEffect(() => {
-    if (
-      formik.values.type === "expense" &&
-      formik.values.items.length > 0
-    ) {
-      formik.setFieldValue("amount", itemTotal, false);
-    }
-  }, [itemTotal, formik.values.type]);
 
   return (
     <form
@@ -287,142 +338,29 @@ const TransactionForm = () => {
         )}
       </div>
 
-      {/* AMOUNT */}
-      <div className="flex flex-col space-y-1">
-        <label
-          htmlFor="amount"
-          className="text-gray-700 font-medium"
-        >
-          <FaDollarSign className="inline mr-2 text-blue-500" />
-          Amount
-        </label>
+      {/* AMOUNT - ONLY FOR INCOME */}
+      {formik.values.type === "income" && (
+        <div className="flex flex-col space-y-1">
+          <label
+            htmlFor="amount"
+            className="text-gray-700 font-medium"
+          >
+            <FaDollarSign className="inline mr-2 text-blue-500" />
+            Amount
+          </label>
 
-        <input
-          type="number"
-          {...formik.getFieldProps("amount")}
-          id="amount"
-          placeholder="Amount"
-          readOnly={
-            formik.values.type === "expense" &&
-            formik.values.items.length > 0
-          }
-          className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-        />
+          <input
+            type="number"
+            {...formik.getFieldProps("amount")}
+            id="amount"
+            placeholder="Amount"
+            className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+          />
 
-        {formik.values.type === "expense" &&
-          formik.values.items.length > 0 && (
-            <p className="text-xs text-gray-500">
-              Amount is calculated from the item prices.
+          {formik.touched.amount && formik.errors.amount && (
+            <p className="text-red-500 text-xs italic">
+              {formik.errors.amount}
             </p>
-          )}
-
-        {formik.touched.amount && formik.errors.amount && (
-          <p className="text-red-500 text-xs italic">
-            {formik.errors.amount}
-          </p>
-        )}
-      </div>
-
-      {/* ADD ITEM */}
-      {formik.values.type === "expense" && (
-        <div>
-          {!showItems && (
-            <button
-              type="button"
-              onClick={handleAddItem}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded"
-            >
-              <FaPlus />
-              Add Item
-            </button>
-          )}
-
-          {/* ITEMS */}
-          {showItems && (
-            <div className="space-y-4 border border-gray-200 rounded-lg p-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-semibold text-gray-800">
-                  Expense Items
-                </h3>
-
-                <button
-                  type="button"
-                  onClick={handleAddItem}
-                  className="flex items-center gap-1 text-green-600 hover:text-green-800 font-medium"
-                >
-                  <FaPlus />
-                  Add Item
-                </button>
-              </div>
-
-              {formik.values.items.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex gap-2 items-start"
-                >
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      placeholder="Item name"
-                      value={item.name}
-                      onChange={(e) =>
-                        formik.setFieldValue(
-                          `items[${index}].name`,
-                          e.target.value
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-md py-2 px-3"
-                    />
-
-                    {formik.touched.items?.[index]?.name &&
-                      formik.errors.items?.[index]?.name && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {formik.errors.items[index].name}
-                        </p>
-                      )}
-                  </div>
-
-                  <div className="w-28">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Price"
-                      value={item.price}
-                      onChange={(e) =>
-                        formik.setFieldValue(
-                          `items[${index}].price`,
-                          e.target.value
-                        )
-                      }
-                      className="w-full border border-gray-300 rounded-md py-2 px-3"
-                    />
-
-                    {formik.touched.items?.[index]?.price &&
-                      formik.errors.items?.[index]?.price && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {formik.errors.items[index].price}
-                        </p>
-                      )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(index)}
-                    className="text-red-500 hover:text-red-700 py-2"
-                    title="Remove item"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              ))}
-
-              <div className="flex justify-end border-t pt-3">
-                <span className="font-semibold text-gray-800">
-                  Total: ${itemTotal.toLocaleString()}
-                </span>
-              </div>
-            </div>
           )}
         </div>
       )}
@@ -464,6 +402,131 @@ const TransactionForm = () => {
           </p>
         )}
       </div>
+
+      {/* ADD ITEM - ONLY FOR EXPENSE AFTER CATEGORY */}
+      {formik.values.type === "expense" &&
+        formik.values.category && (
+          <div>
+            {!showItems && (
+              <button
+                type="button"
+                onClick={handleAddItem}
+                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded"
+              >
+                <FaPlus />
+                Add Item
+              </button>
+            )}
+
+            {showItems && (
+              <div className="space-y-4 border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold text-gray-800">
+                    Expense Items
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={handleAddItem}
+                    className="flex items-center gap-1 text-green-600 hover:text-green-800 font-medium"
+                  >
+                    <FaPlus />
+                    Add Item
+                  </button>
+                </div>
+
+                {formik.values.items.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex gap-2 items-start"
+                  >
+                    {/* ITEM NAME */}
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        placeholder="Item name"
+                        value={item.name}
+                        onChange={(e) =>
+                          formik.setFieldValue(
+                            `items[${index}].name`,
+                            e.target.value
+                          )
+                        }
+                        onBlur={() =>
+                          formik.setFieldTouched(
+                            `items[${index}].name`,
+                            true
+                          )
+                        }
+                        className="w-full border border-gray-300 rounded-md py-2 px-3"
+                      />
+
+                      {formik.errors.items?.[index]?.name && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {formik.errors.items[index].name}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* ITEM PRICE */}
+                    <div className="w-28">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Price"
+                        value={item.price}
+                        onChange={(e) =>
+                          formik.setFieldValue(
+                            `items[${index}].price`,
+                            e.target.value
+                          )
+                        }
+                        onBlur={() =>
+                          formik.setFieldTouched(
+                            `items[${index}].price`,
+                            true
+                          )
+                        }
+                        className="w-full border border-gray-300 rounded-md py-2 px-3"
+                      />
+
+                      {formik.errors.items?.[index]?.price && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {formik.errors.items[index].price}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* REMOVE ITEM */}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(index)}
+                      className="text-red-500 hover:text-red-700 py-2"
+                      title="Remove item"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                ))}
+
+                {/* ITEM TOTAL */}
+                <div className="flex justify-end border-t pt-3">
+                  <span className="font-semibold text-gray-800">
+                    Total: ${itemTotal.toLocaleString()}
+                  </span>
+                </div>
+
+                {formik.errors.items &&
+                  typeof formik.errors.items === "string" && (
+                    <p className="text-red-500 text-xs">
+                      {formik.errors.items}
+                    </p>
+                  )}
+              </div>
+            )}
+          </div>
+        )}
 
       {/* DATE */}
       <div className="flex flex-col space-y-1">
