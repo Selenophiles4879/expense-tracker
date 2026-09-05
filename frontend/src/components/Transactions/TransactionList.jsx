@@ -22,6 +22,9 @@ const TransactionList = () => {
     category: "",
   });
 
+  //! Selected transaction
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+
   //! Handle Filter Change
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -55,6 +58,7 @@ const TransactionList = () => {
     mutationFn: (id) => deleteTransactionAPI(id),
 
     onSuccess: () => {
+      setSelectedTransactionId(null);
       refetch();
     },
 
@@ -82,6 +86,18 @@ const TransactionList = () => {
         transaction,
       },
     });
+  };
+
+  //! Show / hide transaction items
+  const handleTransactionClick = (transaction) => {
+    // Only expenses have items
+    if (transaction.type !== "expense") {
+      return;
+    }
+
+    setSelectedTransactionId((prev) =>
+      prev === transaction._id ? null : transaction._id
+    );
   };
 
   return (
@@ -171,72 +187,156 @@ const TransactionList = () => {
 
           {/* TRANSACTION LIST */}
           <ul className="list-disc pl-5 space-y-2">
-            {transactions?.map((transaction) => (
-              <li
-                key={transaction._id}
-                className="bg-white p-3 rounded-md shadow border border-gray-200 flex justify-between items-center"
-              >
-                <div>
-                  {/* DATE */}
-                  <span className="font-medium text-gray-600">
-                    {new Date(
-                      transaction.date
-                    ).toLocaleDateString()}
-                  </span>
+            {transactions?.map((transaction) => {
+              const isSelected =
+                selectedTransactionId === transaction._id;
 
-                  {/* TYPE */}
-                  <span
-                    className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      transaction.type === "income"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
+              return (
+                <React.Fragment key={transaction._id}>
+                  {/* TRANSACTION */}
+                  <li
+                    onClick={() => handleTransactionClick(transaction)}
+                    className={`bg-white p-3 rounded-md shadow border border-gray-200 flex justify-between items-center ${
+                      transaction.type === "expense"
+                        ? "cursor-pointer hover:bg-gray-50"
+                        : ""
                     }`}
                   >
-                    {transaction.type.charAt(0).toUpperCase() +
-                      transaction.type.slice(1)}
-                  </span>
+                    <div>
+                      {/* DATE */}
+                      <span className="font-medium text-gray-600">
+                        {new Date(
+                          transaction.date
+                        ).toLocaleDateString()}
+                      </span>
 
-                  {/* CATEGORY + AMOUNT */}
-                  <span className="ml-2 text-gray-800">
-                    {transaction.category} - $
-                    {transaction.amount.toLocaleString()}
-                  </span>
+                      {/* TYPE */}
+                      <span
+                        className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          transaction.type === "income"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {transaction.type.charAt(0).toUpperCase() +
+                          transaction.type.slice(1)}
+                      </span>
 
-                  {/* DESCRIPTION */}
-                  <span className="text-sm text-gray-600 italic ml-2">
-                    {transaction.description}
-                  </span>
-                </div>
+                      {/* CATEGORY + AMOUNT */}
+                      <span className="ml-2 text-gray-800">
+                        {transaction.category} - $
+                        {transaction.amount.toLocaleString()}
+                      </span>
 
-                {/* ACTION BUTTONS */}
-                <div className="flex space-x-3">
-                  {/* EDIT */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleUpdateTransaction(transaction)
-                    }
-                    className="text-blue-500 hover:text-blue-700"
-                    title="Edit transaction"
-                  >
-                    <FaEdit />
-                  </button>
+                      {/* DESCRIPTION */}
+                      <span className="text-sm text-gray-600 italic ml-2">
+                        {transaction.description}
+                      </span>
+                    </div>
 
-                  {/* DELETE */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleDelete(transaction._id)
-                    }
-                    disabled={deleteMutation.isPending}
-                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
-                    title="Delete transaction"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </li>
-            ))}
+                    {/* ACTION BUTTONS */}
+                    <div className="flex space-x-3">
+                      {/* EDIT */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpdateTransaction(transaction);
+                        }}
+                        className="text-blue-500 hover:text-blue-700"
+                        title="Edit transaction"
+                      >
+                        <FaEdit />
+                      </button>
+
+                      {/* DELETE */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(transaction._id);
+                        }}
+                        disabled={deleteMutation.isPending}
+                        className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                        title="Delete transaction"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </li>
+
+                  {/* ITEM DETAILS */}
+                  {isSelected &&
+                    transaction.type === "expense" && (
+                      <li className="bg-white p-4 rounded-md shadow border border-gray-200">
+                        <h4 className="font-semibold text-gray-800 mb-3">
+                          Transaction Items
+                        </h4>
+
+                        {transaction.items?.length > 0 ? (
+                          <table className="w-full text-left">
+                            <thead>
+                              <tr className="border-b border-gray-300">
+                                <th className="py-2">Item</th>
+                                <th className="py-2">Price</th>
+                                <th className="py-2">Total</th>
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              {transaction.items.map((item, index) => (
+                                <tr
+                                  key={index}
+                                  className="border-b border-gray-200"
+                                >
+                                  <td className="py-2">
+                                    {item.name}
+                                  </td>
+
+                                  <td className="py-2">
+                                    $
+                                    {Number(
+                                      item.price
+                                    ).toLocaleString()}
+                                  </td>
+
+                                  <td className="py-2">
+                                    $
+                                    {Number(
+                                      item.price
+                                    ).toLocaleString()}
+                                  </td>
+                                </tr>
+                              ))}
+
+                              {/* GRAND TOTAL */}
+                              <tr className="font-semibold">
+                                <td className="py-2">Total</td>
+                                <td></td>
+                                <td className="py-2">
+                                  $
+                                  {transaction.items
+                                    .reduce(
+                                      (total, item) =>
+                                        total +
+                                        Number(item.price || 0),
+                                      0
+                                    )
+                                    .toLocaleString()}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        ) : (
+                          <p className="text-gray-500">
+                            No items found for this transaction.
+                          </p>
+                        )}
+                      </li>
+                    )}
+                </React.Fragment>
+              );
+            })}
           </ul>
         </div>
       </div>
