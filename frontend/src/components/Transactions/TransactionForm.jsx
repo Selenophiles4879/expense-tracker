@@ -1,8 +1,13 @@
+```jsx
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   FaDollarSign,
   FaCalendarAlt,
@@ -70,6 +75,8 @@ const emptyFormValues = {
 const TransactionForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  //! React Query Client
   const queryClient = useQueryClient();
 
   //! Transaction passed from TransactionList
@@ -97,6 +104,7 @@ const TransactionForm = () => {
     mutationFn: addTransactionAPI,
 
     onSuccess: () => {
+      //! Refresh transaction queries including the Dashboard chart
       queryClient.invalidateQueries({
         queryKey: ["list-transactions"],
       });
@@ -121,6 +129,7 @@ const TransactionForm = () => {
     mutationFn: updateTransactionAPI,
 
     onSuccess: () => {
+      //! Refresh transaction queries including the Dashboard chart
       queryClient.invalidateQueries({
         queryKey: ["list-transactions"],
       });
@@ -616,3 +625,4 @@ const TransactionForm = () => {
 };
 
 export default TransactionForm;
+```
