@@ -1,4 +1,3 @@
-```jsx
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaTrash, FaEdit } from "react-icons/fa";
@@ -313,4 +312,3 @@ const TransactionList = () => {
 };
 
 export default TransactionList;
-```
