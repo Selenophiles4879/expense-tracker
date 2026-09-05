@@ -4,7 +4,14 @@ const Transaction = require("../model/Transaction");
 const transactionController = {
   //! CREATE TRANSACTION
   create: asyncHandler(async (req, res) => {
-    const { type, category, amount, date, description } = req.body;
+    const {
+      type,
+      category,
+      amount,
+      date,
+      description,
+      items = [],
+    } = req.body;
 
     if (!type || !amount || !date) {
       res.status(400);
@@ -18,6 +25,7 @@ const transactionController = {
       amount,
       date,
       description,
+      items: type === "expense" ? items : [],
     });
 
     res.status(201).json(transaction);
@@ -66,7 +74,14 @@ const transactionController = {
   update: asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    const { type, category, amount, date, description } = req.body;
+    const {
+      type,
+      category,
+      amount,
+      date,
+      description,
+      items = [],
+    } = req.body;
 
     // IMPORTANT:
     // Transaction must match BOTH:
@@ -83,6 +98,7 @@ const transactionController = {
         amount,
         date,
         description,
+        items: type === "expense" ? items : [],
       },
       {
         new: true,
