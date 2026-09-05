@@ -59,7 +59,7 @@ const categoryController = {
     }
 
     // --- FIX 5: Add an ownership check ---
-    if (category.user.toString() !== req.user.id) {
+    if (category.user.toString() !== req.user.id.toString()) {
       res.status(401);
       throw new Error("Not authorized to update this category");
     }
@@ -96,7 +96,7 @@ const categoryController = {
     }
 
     // --- FIX 7: Add an ownership check ---
-    if (category.user.toString() !== req.user.id) {
+    if (category.user.toString() !== req.user.id.toString()) {
       res.status(401);
       throw new Error("Not authorized to delete this category");
     }
