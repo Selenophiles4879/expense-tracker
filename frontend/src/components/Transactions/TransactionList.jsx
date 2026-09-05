@@ -1,3 +1,4 @@
+```jsx
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FaTrash, FaEdit } from "react-icons/fa";
@@ -181,114 +182,128 @@ const TransactionList = () => {
           {/* TRANSACTION LIST */}
           <ul className="list-disc pl-5 space-y-2">
             {transactions?.map((transaction) => (
-              <li
-                key={transaction._id}
-                onClick={() =>
-                  transaction.type === "expense" &&
-                  transaction.items?.length &&
-                  setSelectedTransactionId((prev) =>
-                    prev === transaction._id ? null : transaction._id
-                  )
-                }
-                className={`bg-white p-3 rounded-md shadow border border-gray-200 flex justify-between items-center ${
-                  transaction.type === "expense" && transaction.items?.length
-                    ? "cursor-pointer"
-                    : ""
-                }`}
-              >
-                <div>
-                  {/* DATE */}
-                  <span className="font-medium text-gray-600">
-                    {new Date(
-                      transaction.date
-                    ).toLocaleDateString()}
-                  </span>
+              <React.Fragment key={transaction._id}>
+                <li
+                  onClick={() =>
+                    transaction.type === "expense" &&
+                    transaction.items?.length &&
+                    setSelectedTransactionId((prev) =>
+                      prev === transaction._id ? null : transaction._id
+                    )
+                  }
+                  className={`bg-white p-3 rounded-md shadow border border-gray-200 flex justify-between items-center ${
+                    transaction.type === "expense" &&
+                    transaction.items?.length
+                      ? "cursor-pointer"
+                      : ""
+                  }`}
+                >
+                  <div>
+                    {/* DATE */}
+                    <span className="font-medium text-gray-600">
+                      {new Date(
+                        transaction.date
+                      ).toLocaleDateString()}
+                    </span>
 
-                  {/* TYPE */}
-                  <span
-                    className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      transaction.type === "income"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {transaction.type.charAt(0).toUpperCase() +
-                      transaction.type.slice(1)}
-                  </span>
+                    {/* TYPE */}
+                    <span
+                      className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        transaction.type === "income"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {transaction.type.charAt(0).toUpperCase() +
+                        transaction.type.slice(1)}
+                    </span>
 
-                  {/* CATEGORY + AMOUNT */}
-                  <span className="ml-2 text-gray-800">
-                    {transaction.category} - $
-                    {transaction.amount.toLocaleString()}
-                  </span>
+                    {/* CATEGORY + AMOUNT */}
+                    <span className="ml-2 text-gray-800">
+                      {transaction.category} - $
+                      {transaction.amount.toLocaleString()}
+                    </span>
 
-                  {/* DESCRIPTION */}
-                  <span className="text-sm text-gray-600 italic ml-2">
-                    {transaction.description}
-                  </span>
-                </div>
-
-                {/* ACTION BUTTONS */}
-                <div className="flex space-x-3">
-                  {/* EDIT */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleUpdateTransaction(transaction);
-                    }}
-                    className="text-blue-500 hover:text-blue-700"
-                    title="Edit transaction"
-                  >
-                    <FaEdit />
-                  </button>
-
-                  {/* DELETE */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(transaction._id);
-                    }}
-                    disabled={deleteMutation.isPending}
-                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
-                    title="Delete transaction"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </li>
-
-              {selectedTransactionId === transaction._id &&
-                transaction.type === "expense" &&
-                transaction.items?.length > 0 && (
-                  <div className="ml-5 mt-2 bg-gray-50 rounded-md border border-gray-200 overflow-hidden">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-2 border">S.No.</th>
-                          <th className="px-4 py-2 border">Item</th>
-                          <th className="px-4 py-2 border">Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {transaction.items.map((item, index) => (
-                          <tr key={item._id || index}>
-                            <td className="px-4 py-2 border">
-                              {index + 1}
-                            </td>
-                            <td className="px-4 py-2 border">
-                              {item.name}
-                            </td>
-                            <td className="px-4 py-2 border">
-                              ${Number(item.price).toLocaleString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    {/* DESCRIPTION */}
+                    <span className="text-sm text-gray-600 italic ml-2">
+                      {transaction.description}
+                    </span>
                   </div>
-                )}
+
+                  {/* ACTION BUTTONS */}
+                  <div className="flex space-x-3">
+                    {/* EDIT */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUpdateTransaction(transaction);
+                      }}
+                      className="text-blue-500 hover:text-blue-700"
+                      title="Edit transaction"
+                    >
+                      <FaEdit />
+                    </button>
+
+                    {/* DELETE */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(transaction._id);
+                      }}
+                      disabled={deleteMutation.isPending}
+                      className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                      title="Delete transaction"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </li>
+
+                {/* EXPENSE ITEM DETAILS */}
+                {selectedTransactionId === transaction._id &&
+                  transaction.type === "expense" &&
+                  transaction.items?.length > 0 && (
+                    <li className="list-none ml-5 mt-2">
+                      <div className="bg-gray-50 rounded-md border border-gray-200 overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="px-4 py-2 border">
+                                S.No.
+                              </th>
+                              <th className="px-4 py-2 border">
+                                Item
+                              </th>
+                              <th className="px-4 py-2 border">
+                                Price
+                              </th>
+                            </tr>
+                          </thead>
+
+                          <tbody>
+                            {transaction.items.map((item, index) => (
+                              <tr key={item._id || index}>
+                                <td className="px-4 py-2 border">
+                                  {index + 1}
+                                </td>
+
+                                <td className="px-4 py-2 border">
+                                  {item.name}
+                                </td>
+
+                                <td className="px-4 py-2 border">
+                                  ${Number(item.price).toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </li>
+                  )}
+              </React.Fragment>
             ))}
           </ul>
         </div>
@@ -298,3 +313,4 @@ const TransactionList = () => {
 };
 
 export default TransactionList;
+```
