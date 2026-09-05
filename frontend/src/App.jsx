@@ -31,8 +31,10 @@ function AppContent() {
   // ✅ RESTORE AUTH ON REFRESH
   useEffect(() => {
     const stored = sessionStorage.getItem("userInfo");
+
     if (stored) {
       const parsed = JSON.parse(stored);
+
       dispatch(
         loginAction({
           id: parsed.id,
@@ -52,7 +54,9 @@ function AppContent() {
         navigate("/login", { replace: true });
       }
     };
+
     window.addEventListener("storage", handler);
+
     return () => window.removeEventListener("storage", handler);
   }, [dispatch, navigate]);
 
@@ -63,19 +67,91 @@ function AppContent() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<HeroSection />} />
+
         <Route path="/login" element={<LoginForm />} />
+
         <Route path="/register" element={<RegistrationForm />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/users/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/verify-email/:token" element={<VerifyEmail />} />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/users/reset-password/:token"
+          element={<ResetPassword />}
+        />
+
+        <Route
+          path="/verify-email/:token"
+          element={<VerifyEmail />}
+        />
 
         {/* Private */}
-        <Route path="/dashboard" element={<AuthRoute><Dashboard /></AuthRoute>} />
-        <Route path="/profile" element={<AuthRoute><UserProfile /></AuthRoute>} />
-        <Route path="/add-category" element={<AuthRoute><AddCategory /></AuthRoute>} />
-        <Route path="/categories" element={<AuthRoute><CategoriesList /></AuthRoute>} />
-        <Route path="/update-category/:id" element={<AuthRoute><UpdateCategory /></AuthRoute>} />
-        <Route path="/add-transaction" element={<AuthRoute><TransactionForm /></AuthRoute>} />
+        <Route
+          path="/dashboard"
+          element={
+            <AuthRoute>
+              <Dashboard />
+            </AuthRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <AuthRoute>
+              <UserProfile />
+            </AuthRoute>
+          }
+        />
+
+        <Route
+          path="/add-category"
+          element={
+            <AuthRoute>
+              <AddCategory />
+            </AuthRoute>
+          }
+        />
+
+        <Route
+          path="/categories"
+          element={
+            <AuthRoute>
+              <CategoriesList />
+            </AuthRoute>
+          }
+        />
+
+        <Route
+          path="/update-category/:id"
+          element={
+            <AuthRoute>
+              <UpdateCategory />
+            </AuthRoute>
+          }
+        />
+
+        {/* ADD TRANSACTION */}
+        <Route
+          path="/add-transaction"
+          element={
+            <AuthRoute>
+              <TransactionForm />
+            </AuthRoute>
+          }
+        />
+
+        {/* UPDATE TRANSACTION */}
+        <Route
+          path="/transactions/update/:id"
+          element={
+            <AuthRoute>
+              <TransactionForm />
+            </AuthRoute>
+          }
+        />
       </Routes>
     </>
   );
