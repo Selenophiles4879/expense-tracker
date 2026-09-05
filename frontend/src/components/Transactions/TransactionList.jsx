@@ -279,18 +279,18 @@ const TransactionList = () => {
                   transaction.items?.length > 0 && (
                     <li className="list-none">
                       <div className="bg-white p-3 rounded-md shadow border border-gray-200">
-                        <table className="w-full text-sm text-gray-800">
+                        <table className="w-full text-base text-gray-800">
                           <thead>
                             <tr className="border-b border-gray-200">
-                              <th className="text-left py-2 font-medium text-gray-600">
+                              <th className="text-left py-2 font-semibold text-gray-700">
                                 S.No.
                               </th>
 
-                              <th className="text-left py-2 font-medium text-gray-600">
+                              <th className="text-left py-2 font-semibold text-gray-700">
                                 Item
                               </th>
 
-                              <th className="text-right py-2 font-medium text-gray-600">
+                              <th className="text-right py-2 font-semibold text-gray-700">
                                 Price
                               </th>
                             </tr>
