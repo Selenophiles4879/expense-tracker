@@ -361,76 +361,135 @@ const TransactionList = () => {
                 
                 {/* Parchment view */}
 
-{/* PARCHMENT EXPANDED ITEM DETAILS */}
+                {/* ============================================================
+    ANCIENT PARCHMENT — EXPANDED ITEM DETAILS
+============================================================ */}
 {selectedTransactionId === transaction._id &&
   transaction.type === "expense" &&
   transaction.items?.length > 0 && (
-    <li className="list-none">
+    <li className="list-none w-full">
+
       <div
         className="
           relative
-          my-2
+          w-full
+          min-h-[760px]
           overflow-hidden
+          isolate
+
           px-5
           py-7
+
           md:px-10
-          md:py-9
+          md:py-8
 
-          text-[#3b2414]
+          text-[#3b1d0b]
 
-          border-[3px]
-          border-[#8a551f]
+          shadow-[0_14px_35px_rgba(45,22,5,0.48)]
 
-          shadow-[0_12px_30px_rgba(55,30,8,0.45)]
+          bg-[#d7a762]
 
-          bg-[#e6c487]
-
-          bg-[radial-gradient(ellipse_at_center,rgba(255,239,183,0.8)_0%,transparent_55%),radial-gradient(ellipse_at_top_left,rgba(105,55,12,0.55)_0%,transparent_20%),radial-gradient(ellipse_at_top_right,rgba(105,55,12,0.55)_0%,transparent_20%),radial-gradient(ellipse_at_bottom_left,rgba(91,45,8,0.65)_0%,transparent_22%),radial-gradient(ellipse_at_bottom_right,rgba(91,45,8,0.65)_0%,transparent_22%),linear-gradient(135deg,#d5a965,#f0d39b_28%,#e5c17f_55%,#f1d39a_75%,#c9974e)]
-
-          [clip-path:polygon(1%_3%,5%_1%,10%_2%,15%_1%,21%_3%,27%_1%,34%_2%,40%_1%,47%_3%,53%_1%,60%_2%,67%_1%,73%_3%,80%_1%,87%_2%,94%_1%,99%_4%,97%_11%,99%_18%,97%_25%,99%_33%,97%_40%,99%_48%,97%_56%,99%_64%,97%_72%,99%_80%,97%_88%,99%_96%,92%_98%,85%_96%,78%_99%,70%_97%,63%_99%,56%_97%,49%_99%,42%_97%,35%_99%,28%_97%,21%_99%,14%_97%,7%_99%,1%_96%,3%_88%,1%_80%,3%_72%,1%_64%,3%_56%,1%_48%,3%_40%,1%_32%,3%_24%,1%_16%,3%_9%)]
+          [clip-path:polygon(
+            1%_2%,4%_3%,7%_1%,10%_3%,13%_1%,17%_2%,21%_1%,
+            25%_3%,29%_1%,33%_2%,37%_1%,41%_3%,45%_1%,49%_2%,
+            53%_1%,57%_3%,61%_1%,65%_2%,69%_1%,73%_3%,77%_1%,
+            81%_2%,85%_1%,89%_3%,93%_1%,97%_3%,99%_5%,
+            98%_11%,99%_17%,97%_23%,99%_29%,98%_35%,99%_41%,
+            97%_47%,99%_53%,98%_59%,99%_65%,97%_71%,99%_77%,
+            98%_83%,99%_89%,97%_95%,99%_98%,
+            94%_97%,90%_99%,86%_97%,82%_99%,78%_97%,74%_99%,
+            70%_97%,66%_99%,62%_97%,58%_99%,54%_97%,50%_99%,
+            46%_97%,42%_99%,38%_97%,34%_99%,30%_97%,26%_99%,
+            22%_97%,18%_99%,14%_97%,10%_99%,6%_97%,2%_99%,
+            3%_94%,1%_88%,3%_82%,1%_76%,3%_70%,1%_64%,3%_58%,
+            1%_52%,3%_46%,1%_40%,3%_34%,1%_28%,3%_22%,1%_16%,3%_10%
+          )]
         "
       >
-        {/* =========================================
-            AGED PAPER OVERLAY
-        ========================================== */}
+
+        {/* ========================================================
+            PAPER BASE
+        ========================================================= */}
         <div
           className="
             absolute
             inset-0
+            -z-20
             pointer-events-none
-            opacity-50
 
-            bg-[radial-gradient(circle_at_25%_30%,rgba(100,55,15,0.18)_0_2px,transparent_3px),radial-gradient(circle_at_70%_65%,rgba(100,55,15,0.16)_0_1px,transparent_3px),radial-gradient(circle_at_45%_80%,rgba(100,55,15,0.13)_0_2px,transparent_4px)]
+            bg-[radial-gradient(ellipse_at_center,#f4dca7_0%,#edcf91_38%,#d5a764_72%,#a96d2d_100%)]
           "
         />
 
-        {/* =========================================
-            DARK BURNT EDGES
-        ========================================== */}
+        {/* ========================================================
+            REALISTIC PAPER TEXTURE
+        ========================================================= */}
+        <svg
+          className="absolute inset-0 w-full h-full -z-10 opacity-35 pointer-events-none"
+          preserveAspectRatio="none"
+        >
+          <filter id={`paperTexture-${transaction._id}`}>
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.035"
+              numOctaves="4"
+              seed="8"
+            />
+
+            <feColorMatrix
+              type="saturate"
+              values="0"
+            />
+
+            <feComponentTransfer>
+              <feFuncA
+                type="table"
+                tableValues="0 0.45"
+              />
+            </feComponentTransfer>
+          </filter>
+
+          <rect
+            width="100%"
+            height="100%"
+            filter={`url(#paperTexture-${transaction._id})`}
+          />
+        </svg>
+
+        {/* ========================================================
+            BURNT EDGE VIGNETTE
+        ========================================================= */}
         <div
           className="
             absolute
             inset-0
+            -z-10
             pointer-events-none
-            opacity-70
 
-            bg-[radial-gradient(ellipse_at_top,transparent_60%,rgba(70,34,6,0.35)_100%),radial-gradient(ellipse_at_bottom,transparent_60%,rgba(70,34,6,0.45)_100%),linear-gradient(to_right,rgba(75,35,5,0.35),transparent_7%,transparent_93%,rgba(75,35,5,0.35))]
+            bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(77,36,6,.18)_76%,rgba(60,27,4,.58)_100%)]
           "
         />
 
-        {/* =========================================
-            OLD PAPER STAINS
-        ========================================== */}
+        {/* ========================================================
+            OLD INK / WATER STAINS
+        ========================================================= */}
         <div
           className="
             absolute
-            -top-10
-            left-20
-            w-40
-            h-40
+            left-[4%]
+            top-[42%]
+
+            w-28
+            h-20
+
             rounded-full
-            bg-[#754313]/10
-            blur-3xl
+
+            bg-[#734014]/20
+
+            blur-xl
+
+            rotate-[-18deg]
+
             pointer-events-none
           "
         />
@@ -438,130 +497,508 @@ const TransactionList = () => {
         <div
           className="
             absolute
-            bottom-5
-            right-20
-            w-52
-            h-52
+            right-[6%]
+            top-[48%]
+
+            w-24
+            h-32
+
             rounded-full
-            bg-[#754313]/10
-            blur-3xl
+
+            bg-[#6c3a12]/15
+
+            blur-xl
+
+            rotate-[20deg]
+
             pointer-events-none
           "
         />
 
-        {/* =========================================
-            DECORATIVE CORNERS
-        ========================================== */}
-
-        {/* TOP LEFT */}
         <div
           className="
             absolute
-            top-3
-            left-3
-            text-5xl
-            md:text-6xl
-            font-serif
-            opacity-70
-            rotate-[-10deg]
+            left-[16%]
+            bottom-[7%]
+
+            w-20
+            h-20
+
+            rounded-full
+
+            bg-[#754319]/15
+
+            blur-lg
+
             pointer-events-none
           "
+        />
+
+        {/* ========================================================
+            INNER AGED BORDER
+        ========================================================= */}
+        <div
+          className="
+            absolute
+            inset-[22px]
+
+            border
+            border-[#67350e]/35
+
+            pointer-events-none
+
+            opacity-70
+          "
+        />
+
+        {/* ========================================================
+            TOP LEFT ORNAMENT — MORE DETAILED
+        ========================================================= */}
+        <svg
+          className="
+            absolute
+            top-5
+            left-5
+
+            w-32
+            h-32
+
+            md:w-40
+            md:h-40
+
+            text-[#542609]
+
+            opacity-90
+
+            pointer-events-none
+          "
+          viewBox="0 0 180 180"
+          fill="none"
         >
-          ❧
-        </div>
+          <path
+            d="M15 155
+               C15 100 18 38 76 25
+               C108 18 133 26 158 10"
+            stroke="currentColor"
+            strokeWidth="3"
+          />
 
-        {/* TOP RIGHT */}
-        <div
+          <path
+            d="M20 137
+               C48 125 55 103 38 82
+               C65 91 91 77 87 50
+               C110 64 134 50 136 28"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          />
+
+          <path
+            d="M36 119
+               C59 112 69 98 61 83
+               C78 88 94 77 94 63"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+
+          <path
+            d="M24 62
+               C40 47 57 43 76 47
+               C61 32 61 22 66 15"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+
+          <circle
+            cx="28"
+            cy="28"
+            r="6"
+            fill="currentColor"
+          />
+
+          <circle
+            cx="73"
+            cy="47"
+            r="4"
+            fill="currentColor"
+          />
+
+          <circle
+            cx="91"
+            cy="78"
+            r="4"
+            fill="currentColor"
+          />
+
+          <path
+            d="M14 154L14 104"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+        </svg>
+
+        {/* ========================================================
+            TOP RIGHT ORNAMENT
+        ========================================================= */}
+        <svg
           className="
             absolute
-            top-3
-            right-3
-            text-5xl
-            md:text-6xl
-            font-serif
-            opacity-70
+            top-5
+            right-5
+
+            w-32
+            h-32
+
+            md:w-40
+            md:h-40
+
+            text-[#542609]
+
+            opacity-90
+
             scale-x-[-1]
-            rotate-[-10deg]
+
             pointer-events-none
           "
+          viewBox="0 0 180 180"
+          fill="none"
         >
-          ❧
-        </div>
+          <path
+            d="M15 155
+               C15 100 18 38 76 25
+               C108 18 133 26 158 10"
+            stroke="currentColor"
+            strokeWidth="3"
+          />
 
-        {/* BOTTOM LEFT */}
-        <div
+          <path
+            d="M20 137
+               C48 125 55 103 38 82
+               C65 91 91 77 87 50
+               C110 64 134 50 136 28"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          />
+
+          <path
+            d="M36 119
+               C59 112 69 98 61 83
+               C78 88 94 77 94 63"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+
+          <path
+            d="M24 62
+               C40 47 57 43 76 47
+               C61 32 61 22 66 15"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+
+          <circle
+            cx="28"
+            cy="28"
+            r="6"
+            fill="currentColor"
+          />
+        </svg>
+
+        {/* ========================================================
+            BOTTOM RIGHT ORNAMENT
+        ========================================================= */}
+        <svg
           className="
             absolute
             bottom-3
-            left-3
-            text-5xl
-            md:text-6xl
-            font-serif
-            opacity-70
-            rotate-[10deg]
+            right-5
+
+            w-36
+            h-36
+
+            md:w-44
+            md:h-44
+
+            text-[#542609]
+
+            opacity-90
+
+            scale-x-[-1]
+            scale-y-[-1]
+
             pointer-events-none
           "
+          viewBox="0 0 180 180"
+          fill="none"
         >
-          ❧
-        </div>
+          <path
+            d="M15 155
+               C15 100 18 38 76 25
+               C108 18 133 26 158 10"
+            stroke="currentColor"
+            strokeWidth="3"
+          />
 
-        {/* BOTTOM RIGHT */}
+          <path
+            d="M20 137
+               C48 125 55 103 38 82
+               C65 91 91 77 87 50
+               C110 64 134 50 136 28"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          />
+
+          <path
+            d="M36 119
+               C59 112 69 98 61 83
+               C78 88 94 77 94 63"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </svg>
+
+        {/* ========================================================
+            COMPASS
+        ========================================================= */}
         <div
           className="
             absolute
-            bottom-3
-            right-3
-            text-5xl
-            md:text-6xl
-            font-serif
-            opacity-70
-            scale-x-[-1]
-            rotate-[10deg]
+
+            left-[7%]
+            top-[15%]
+
+            w-28
+            h-28
+
+            md:w-36
+            md:h-36
+
+            opacity-45
+
             pointer-events-none
           "
         >
-          ❧
+          <svg
+            viewBox="0 0 160 160"
+            className="w-full h-full"
+          >
+            <circle
+              cx="80"
+              cy="80"
+              r="58"
+              fill="none"
+              stroke="#70451f"
+              strokeWidth="2"
+            />
+
+            <circle
+              cx="80"
+              cy="80"
+              r="46"
+              fill="none"
+              stroke="#70451f"
+              strokeWidth="1"
+            />
+
+            <circle
+              cx="80"
+              cy="80"
+              r="9"
+              fill="none"
+              stroke="#70451f"
+              strokeWidth="2"
+            />
+
+            <path
+              d="M80 15V145M15 80H145"
+              stroke="#70451f"
+              strokeWidth="1"
+            />
+
+            {/* North */}
+            <path
+              d="M80 20L91 72L80 80L69 72Z"
+              fill="#70451f"
+            />
+
+            {/* South */}
+            <path
+              d="M80 140L69 88L80 80L91 88Z"
+              fill="#b08043"
+            />
+
+            {/* East */}
+            <path
+              d="M140 80L88 69L80 80L88 91Z"
+              fill="#70451f"
+            />
+
+            {/* West */}
+            <path
+              d="M20 80L72 91L80 80L72 69Z"
+              fill="#b08043"
+            />
+
+            <circle
+              cx="80"
+              cy="80"
+              r="5"
+              fill="#4f260b"
+            />
+
+            <text
+              x="80"
+              y="12"
+              textAnchor="middle"
+              fontSize="15"
+              fill="#70451f"
+              fontFamily="serif"
+            >
+              N
+            </text>
+
+            <text
+              x="80"
+              y="157"
+              textAnchor="middle"
+              fontSize="15"
+              fill="#70451f"
+              fontFamily="serif"
+            >
+              S
+            </text>
+
+            <text
+              x="151"
+              y="85"
+              textAnchor="middle"
+              fontSize="15"
+              fill="#70451f"
+              fontFamily="serif"
+            >
+              E
+            </text>
+
+            <text
+              x="9"
+              y="85"
+              textAnchor="middle"
+              fontSize="15"
+              fill="#70451f"
+              fontFamily="serif"
+            >
+              W
+            </text>
+          </svg>
         </div>
 
-        {/* =========================================
+        {/* ========================================================
+            RIGHT SIDE QUOTE
+        ========================================================= */}
+        <div
+          className="
+            absolute
+            right-[5%]
+            top-[14%]
+
+            hidden
+            lg:block
+
+            w-36
+
+            text-center
+
+            font-serif
+            italic
+
+            text-[#4d2a12]
+
+            opacity-85
+
+            text-base
+
+            leading-7
+          "
+        >
+          <p>
+            “Small
+            <br />
+            Expenses
+            <br />
+            Build
+            <br />
+            a Better
+            <br />
+            Tomorrow”
+          </p>
+        </div>
+
+        {/* ========================================================
             MAIN CONTENT
-        ========================================== */}
-        <div className="relative z-10">
+        ========================================================= */}
+        <div className="relative z-30">
 
-          {/* TOP ORNAMENT */}
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="h-px flex-1 max-w-24 bg-[#60350f]/60" />
-
-            <span className="text-2xl font-serif">
-              ❦
-            </span>
-
-            <span className="text-xl">
-              ✦
-            </span>
-
-            <span className="text-2xl font-serif">
-              ❦
-            </span>
-
-            <div className="h-px flex-1 max-w-24 bg-[#60350f]/60" />
-          </div>
-
-          {/* =========================================
-              TITLE
-          ========================================== */}
+          {/* ======================================================
+              HEADER
+          ====================================================== */}
           <div className="text-center">
 
+            {/* Decorative line */}
+            <div className="flex items-center justify-center gap-5">
+
+              <div className="h-[2px] w-16 md:w-28 bg-[#512508]/75" />
+
+              <svg
+                width="55"
+                height="28"
+                viewBox="0 0 55 28"
+                className="text-[#512508]"
+              >
+                <path
+                  d="M2 14H18
+                     C24 14 25 4 29 4
+                     C33 4 33 24 29 24
+                     C25 24 24 14 18 14
+                     H2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                />
+
+                <path
+                  d="M53 14H37
+                     C31 14 30 4 26 4
+                     C22 4 22 24 26 24
+                     C30 24 31 14 37 14
+                     H53"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                />
+              </svg>
+
+              <div className="h-[2px] w-16 md:w-28 bg-[#512508]/75" />
+
+            </div>
+
+            {/* ==================================================
+                TITLE
+            =================================================== */}
             <h4
               className="
-                text-4xl
-                md:text-5xl
+                mt-1
+
+                text-5xl
+                md:text-7xl
+
                 font-serif
                 italic
                 font-bold
-                tracking-wide
-                text-[#3d210d]
-                drop-shadow-[1px_2px_0_rgba(70,35,5,0.18)]
+
+                tracking-tight
+
+                text-[#3a1705]
+
+                drop-shadow-[1px_2px_1px_rgba(70,30,5,.25)]
               "
             >
               Expense Items
@@ -569,130 +1006,167 @@ const TransactionList = () => {
 
             <p
               className="
-                mt-2
-                text-base
-                md:text-lg
+                mt-1
+
+                text-xl
+                md:text-3xl
+
                 font-serif
                 italic
-                text-[#593719]
-                opacity-90
+
+                text-[#4a240d]
               "
             >
               A record of purchased items
             </p>
 
-            {/* TITLE ORNAMENT */}
-            <div className="flex items-center justify-center gap-3 mt-4">
-              <div className="h-px w-20 bg-[#70451f]/60" />
+            {/* ==================================================
+                HEADER ORNAMENT
+            =================================================== */}
+            <div className="flex justify-center items-center gap-4 mt-3">
 
-              <span className="text-lg">
-                ❧
-              </span>
+              <div className="h-[2px] w-24 bg-[#62300d]/60" />
 
-              <div className="h-px w-20 bg-[#70451f]/60" />
+              <svg
+                width="45"
+                height="28"
+                viewBox="0 0 45 28"
+                className="text-[#62300d]"
+              >
+                <path
+                  d="M22 2
+                     C22 2 16 11 8 14
+                     C16 17 22 26 22 26
+                     C22 26 29 17 37 14
+                     C29 11 22 2 22 2Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+
+                <circle
+                  cx="22"
+                  cy="14"
+                  r="3"
+                  fill="currentColor"
+                />
+              </svg>
+
+              <div className="h-[2px] w-24 bg-[#62300d]/60" />
+
             </div>
 
-            {/* CATEGORY */}
-            <div className="mt-3">
+            {/* ==================================================
+                CATEGORY
+            =================================================== */}
+            <div className="mt-2">
+
               <span
                 className="
-                  inline-block
-                  px-5
-                  py-1
-
-                  border-t
-                  border-b
-                  border-[#70451f]/60
-
                   text-xs
                   uppercase
-                  tracking-[0.3em]
+                  tracking-[0.35em]
+
                   font-serif
                   font-bold
+
+                  text-[#60310e]
                 "
               >
                 {transaction.category}
               </span>
+
             </div>
+
           </div>
 
-          {/* =========================================
-              INNER LEDGER PAPER
-          ========================================== */}
+          {/* ======================================================
+              INNER LEDGER
+          ====================================================== */}
           <div
             className="
               relative
-              mt-6
-              mx-auto
-              max-w-4xl
 
-              px-4
-              py-4
-              md:px-8
-              md:py-5
+              mx-auto
+
+              mt-5
+
+              w-[92%]
+              md:w-[76%]
+
+              px-5
+              md:px-10
+
+              pt-2
+              pb-1
+
+              bg-[#e4bd79]
 
               border
-              border-[#70451f]/70
+              border-[#65320c]
 
-              shadow-[inset_0_0_25px_rgba(80,40,10,0.2)]
+              shadow-[0_5px_10px_rgba(62,28,5,.3),inset_0_0_25px_rgba(75,32,5,.22)]
 
-              bg-[#edcf92]/70
-
-              [clip-path:polygon(1%_3%,8%_1%,16%_3%,25%_1%,34%_3%,43%_1%,52%_3%,61%_1%,70%_3%,79%_1%,88%_3%,99%_1%,97%_15%,99%_30%,97%_45%,99%_60%,97%_75%,99%_98%,88%_96%,77%_99%,66%_97%,55%_99%,44%_97%,33%_99%,22%_97%,11%_99%,1%_97%,3%_82%,1%_67%,3%_52%,1%_37%,3%_22%,1%_8%)]
+              [clip-path:polygon(
+                1%_3%,7%_1%,14%_3%,21%_1%,28%_3%,35%_1%,42%_3%,
+                49%_1%,56%_3%,63%_1%,70%_3%,77%_1%,84%_3%,92%_1%,99%_3%,
+                98%_16%,99%_31%,98%_46%,99%_61%,98%_76%,99%_98%,
+                91%_96%,84%_99%,77%_97%,70%_99%,63%_97%,56%_99%,
+                49%_97%,42%_99%,35%_97%,28%_99%,21%_97%,14%_99%,
+                7%_97%,1%_99%,2%_83%,1%_68%,2%_53%,1%_38%,2%_23%,1%_8%
+              )]
             "
           >
 
-            {/* INNER CORNER ORNAMENTS */}
-            <span
+            {/* Ledger texture */}
+            <div
               className="
                 absolute
-                top-1
-                left-2
-                text-2xl
-                opacity-60
-              "
-            >
-              ❧
-            </span>
+                inset-0
+                pointer-events-none
 
-            <span
-              className="
-                absolute
-                top-1
-                right-2
-                text-2xl
-                opacity-60
-                scale-x-[-1]
-              "
-            >
-              ❧
-            </span>
+                opacity-25
 
-            {/* =====================================
+                bg-[radial-gradient(circle_at_20%_30%,#70451f_0_1px,transparent_3px),radial-gradient(circle_at_70%_70%,#70451f_0_1px,transparent_4px)]
+              "
+            />
+
+            {/* ==================================================
                 TABLE
-            ====================================== */}
+            =================================================== */}
             <table
               className="
+                relative
                 w-full
-                text-base
-                md:text-lg
+
                 font-serif
+
+                text-lg
+                md:text-2xl
+
+                text-[#351b0b]
               "
             >
+
               <thead>
+
                 <tr
                   className="
                     border-b-2
-                    border-[#60350f]/70
+                    border-[#5b2a08]/80
                   "
                 >
+
                   <th
                     className="
-                      text-left
                       py-3
-                      font-bold
+
+                      text-left
+
                       italic
-                      w-20
+                      font-bold
+
+                      w-[22%]
                     "
                   >
                     S.No.
@@ -700,10 +1174,12 @@ const TransactionList = () => {
 
                   <th
                     className="
-                      text-left
                       py-3
-                      font-bold
+
+                      text-left
+
                       italic
+                      font-bold
                     "
                   >
                     Item
@@ -711,83 +1187,117 @@ const TransactionList = () => {
 
                   <th
                     className="
-                      text-right
                       py-3
-                      font-bold
+
+                      text-right
+
                       italic
+                      font-bold
+
+                      w-[25%]
                     "
                   >
                     Price
                   </th>
+
                 </tr>
+
               </thead>
 
               <tbody>
+
                 {transaction.items.map((item, index) => (
                   <tr
                     key={item._id || index}
                     className="
                       border-b
-                      border-[#70451f]/30
-                      transition-all
-                      duration-200
-                      hover:bg-[#9b682f]/10
+                      border-[#75451f]/35
+
+                      hover:bg-[#75451f]/10
+
+                      transition-colors
                     "
                   >
-                    <td className="py-3">
+
+                    <td className="py-3 md:py-3.5">
                       {index + 1}.
                     </td>
 
-                    <td className="py-3 font-medium">
+                    <td
+                      className="
+                        py-3
+                        md:py-3.5
+
+                        italic
+                        font-medium
+                      "
+                    >
                       {item.name}
                     </td>
 
                     <td
                       className="
                         py-3
+                        md:py-3.5
+
                         text-right
+
+                        italic
                         font-medium
+
                         whitespace-nowrap
                       "
                     >
                       ₹{Number(item.price).toLocaleString()}
                     </td>
+
                   </tr>
                 ))}
 
-                {/* =================================
+                {/* =================================================
                     TOTAL
-                ================================== */}
+                ================================================== */}
                 <tr>
+
                   <td
                     colSpan="2"
                     className="
                       pt-5
-                      pb-2
-                      font-bold
+                      pb-3
+
+                      text-2xl
+                      md:text-4xl
+
                       italic
-                      text-xl
-                      md:text-2xl
+                      font-bold
                     "
                   >
-                    <span className="mr-2 text-2xl">
+
+                    <span className="mr-4">
                       〰
                     </span>
 
                     Total
+
                   </td>
 
                   <td
                     className="
                       pt-5
-                      pb-2
+                      pb-3
+
                       text-right
-                      font-bold
+
+                      text-2xl
+                      md:text-4xl
+
                       italic
-                      text-xl
-                      md:text-2xl
+                      font-bold
+
+                      whitespace-nowrap
                     "
                   >
+
                     ₹
                     {transaction.items
                       .reduce(
@@ -796,81 +1306,359 @@ const TransactionList = () => {
                         0
                       )
                       .toLocaleString()}
+
                   </td>
+
                 </tr>
+
               </tbody>
+
             </table>
+
           </div>
 
-          {/* =========================================
+          {/* ======================================================
+              WAX SEAL
+          ====================================================== */}
+          <div
+            className="
+              absolute
+
+              left-[3%]
+              bottom-[5%]
+
+              w-28
+              h-28
+
+              md:w-36
+              md:h-36
+
+              pointer-events-none
+
+              rotate-[-8deg]
+            "
+          >
+
+            <svg
+              viewBox="0 0 150 150"
+              className="w-full h-full"
+            >
+
+              <defs>
+
+                <radialGradient
+                  id={`waxSeal-${transaction._id}`}
+                  cx="35%"
+                  cy="30%"
+                >
+                  <stop
+                    offset="0%"
+                    stopColor="#c85b49"
+                  />
+
+                  <stop
+                    offset="45%"
+                    stopColor="#8f2c20"
+                  />
+
+                  <stop
+                    offset="100%"
+                    stopColor="#4e100b"
+                  />
+                </radialGradient>
+
+              </defs>
+
+              {/* Wax seal shape */}
+              <path
+                d="
+                  M75 8
+                  C88 4 96 16 108 18
+                  C122 19 129 31 125 43
+                  C137 53 133 67 126 76
+                  C132 89 121 102 110 103
+                  C101 116 87 112 77 121
+                  C65 116 53 120 43 111
+                  C29 111 20 99 24 87
+                  C13 77 18 62 24 53
+                  C19 39 29 28 42 27
+                  C50 15 64 18 75 8
+                  Z
+                "
+                fill={`url(#waxSeal-${transaction._id})`}
+                stroke="#54130e"
+                strokeWidth="3"
+              />
+
+              {/* Inner ring */}
+              <circle
+                cx="75"
+                cy="68"
+                r="38"
+                fill="none"
+                stroke="#4b100b"
+                strokeWidth="3"
+              />
+
+              <circle
+                cx="75"
+                cy="68"
+                r="32"
+                fill="none"
+                stroke="#c76a58"
+                strokeWidth="1.5"
+              />
+
+              {/* Tree emblem */}
+              <path
+                d="
+                  M75 43
+                  V94
+
+                  M75 57
+                  L58 46
+
+                  M75 61
+                  L92 48
+
+                  M75 70
+                  L56 60
+
+                  M75 73
+                  L95 60
+
+                  M64 95
+                  H86
+                "
+                stroke="#45100c"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+
+              <circle
+                cx="58"
+                cy="46"
+                r="6"
+                fill="#55140e"
+              />
+
+              <circle
+                cx="92"
+                cy="48"
+                r="6"
+                fill="#55140e"
+              />
+
+              <circle
+                cx="56"
+                cy="60"
+                r="6"
+                fill="#55140e"
+              />
+
+              <circle
+                cx="95"
+                cy="60"
+                r="6"
+                fill="#55140e"
+              />
+
+            </svg>
+
+          </div>
+
+          {/* ======================================================
+              QUILL / FEATHER
+          ====================================================== */}
+          <div
+            className="
+              absolute
+
+              right-[3%]
+              bottom-[5%]
+
+              w-28
+              h-48
+
+              md:w-36
+              md:h-56
+
+              rotate-[8deg]
+
+              pointer-events-none
+            "
+          >
+
+            <svg
+              viewBox="0 0 120 220"
+              className="w-full h-full"
+              fill="none"
+            >
+
+              {/* Shaft */}
+              <path
+                d="M30 211C44 161 63 103 95 16"
+                stroke="#3d1d08"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+
+              {/* Feather */}
+              <path
+                d="
+                  M32 174
+                  C8 148 8 108 23 76
+                  C39 44 67 22 101 9
+                  C102 45 91 79 72 109
+                  C56 134 42 158 32 174
+                  Z
+                "
+                fill="#684018"
+                stroke="#3b1c08"
+                strokeWidth="2"
+              />
+
+              {/* Feather central vein */}
+              <path
+                d="M30 174C50 125 72 77 100 11"
+                stroke="#d1a05e"
+                strokeWidth="2"
+              />
+
+              {/* Feather details */}
+              <path
+                d="
+                  M42 145L17 126
+                  M48 130L18 106
+                  M55 113L22 87
+                  M62 97L31 69
+                  M70 80L43 54
+                  M77 63L55 42
+                  M84 45L67 29
+                  M91 29L79 20
+                "
+                stroke="#c39254"
+                strokeWidth="2"
+              />
+
+            </svg>
+
+          </div>
+
+          {/* ======================================================
+              BOTTOM LEFT QUOTE
+          ====================================================== */}
+          <div
+            className="
+              absolute
+
+              left-[18%]
+              bottom-[7%]
+
+              hidden
+              md:block
+
+              font-serif
+              italic
+
+              text-[#4d2810]
+
+              text-base
+              md:text-lg
+
+              leading-7
+            "
+          >
+            <p>
+              “Good Food
+              <br />
+              &nbsp;&nbsp;Brighter Days”
+            </p>
+          </div>
+
+          {/* ======================================================
+              BOTTOM RIGHT QUOTE
+          ====================================================== */}
+          <div
+            className="
+              absolute
+
+              right-[16%]
+              bottom-[7%]
+
+              hidden
+              md:block
+
+              text-right
+
+              font-serif
+              italic
+
+              text-[#4d2810]
+
+              text-base
+              md:text-lg
+
+              leading-7
+            "
+          >
+            <p>
+              Spend Wisely
+              <br />
+              Live Better
+            </p>
+          </div>
+
+          {/* ======================================================
               BOTTOM ORNAMENT
-          ========================================== */}
+          ====================================================== */}
           <div
             className="
               flex
               items-center
               justify-center
-              gap-3
-              mt-6
-            "
-          >
-            <span className="text-xl">
-              ❧
-            </span>
-
-            <div className="h-px w-20 bg-[#70451f]/60" />
-
-            <span className="text-lg">
-              ◆
-            </span>
-
-            <div className="h-px w-20 bg-[#70451f]/60" />
-
-            <span className="text-xl scale-x-[-1]">
-              ❧
-            </span>
-          </div>
-
-          {/* =========================================
-              PARCHMENT FOOTER
-          ========================================== */}
-          <div
-            className="
-              flex
-              flex-col
-              md:flex-row
-              justify-between
-              items-center
-              gap-2
+              gap-4
               mt-5
-              px-4
+              text-[#57290b]
             "
           >
-            <span
-              className="
-                text-xs
-                md:text-sm
-                font-serif
-                italic
-                opacity-75
-              "
-            >
-              — Recorded with care —
-            </span>
 
-            <span
-              className="
-                text-xs
-                md:text-sm
-                font-serif
-                italic
-                opacity-75
-              "
+            <div className="h-[2px] w-20 md:w-32 bg-[#63300d]/60" />
+
+            <svg
+              width="55"
+              height="25"
+              viewBox="0 0 55 25"
             >
-              Spend wisely, live better
-            </span>
+              <path
+                d="
+                  M2 12.5
+                  H18
+                  C22 12.5 24 5 28 5
+                  C32 5 33 20 28 20
+                  C24 20 22 12.5 18 12.5
+                  H2
+
+                  M53 12.5
+                  H37
+                  C33 12.5 31 5 27 5
+                  C23 5 22 20 27 20
+                  C31 20 33 12.5 37 12.5
+                  H53
+                "
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <circle
+                cx="27.5"
+                cy="12.5"
+                r="3"
+                fill="currentColor"
+              />
+            </svg>
+            <div className="h-[2px] w-20 md:w-32 bg-[#63300d]/60" />
           </div>
-
         </div>
       </div>
     </li>
