@@ -281,8 +281,7 @@ const TransactionList = () => {
                     </button>
                   </div>
                 </li>
-
-                ```jsx
+                
                 {/* EXPANDED ITEM DETAILS
                 {selectedTransactionId === transaction._id &&
                   transaction.type === "expense" &&
