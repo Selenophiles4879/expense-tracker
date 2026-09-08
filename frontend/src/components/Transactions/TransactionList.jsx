@@ -282,7 +282,7 @@ const TransactionList = () => {
                   </div>
                 </li>
 
-                {/*
+                ```jsx
                 {/* EXPANDED ITEM DETAILS */}
                 {selectedTransactionId === transaction._id &&
                   transaction.type === "expense" &&
@@ -359,7 +359,7 @@ const TransactionList = () => {
                     </li>
                   )}
                 */}
-                
+                ```
                 {/* Parchment view */}
 
 {/* EXPANDED ITEM DETAILS */}
