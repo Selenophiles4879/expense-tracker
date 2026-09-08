@@ -241,7 +241,7 @@ const TransactionList = () => {
 
                     {/* CATEGORY + AMOUNT */}
                     <span className="ml-2 text-gray-800">
-                      {transaction.category} - $
+                      {transaction.category} - ₹
                       {transaction.amount.toLocaleString()}
                     </span>
 
@@ -322,7 +322,7 @@ const TransactionList = () => {
                                   </td>
 
                                   <td className="py-2 text-right">
-                                    $
+                                    ₹
                                     {Number(
                                       item.price
                                     ).toLocaleString()}
@@ -341,7 +341,7 @@ const TransactionList = () => {
                               </td>
 
                               <td className="pt-3 text-right font-semibold text-gray-800">
-                                $
+                                ₹
                                 {transaction.items
                                   .reduce(
                                     (total, item) =>
