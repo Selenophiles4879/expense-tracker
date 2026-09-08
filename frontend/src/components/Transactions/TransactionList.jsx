@@ -282,6 +282,7 @@ const TransactionList = () => {
                   </div>
                 </li>
 
+                {/*
                 {/* EXPANDED ITEM DETAILS */}
                 {selectedTransactionId === transaction._id &&
                   transaction.type === "expense" &&
@@ -357,6 +358,275 @@ const TransactionList = () => {
                       </div>
                     </li>
                   )}
+                */}
+                
+                {/* Parchment view */}
+
+{/* EXPANDED ITEM DETAILS */}
+{selectedTransactionId === transaction._id &&
+  transaction.type === "expense" &&
+  transaction.items?.length > 0 && (
+    <li className="list-none">
+      <div
+        className="
+          relative
+          overflow-hidden
+          p-6
+          md:p-8
+          rounded-sm
+          border
+          border-[#8b5a2b]
+          shadow-[0_8px_25px_rgba(70,40,10,0.35)]
+          text-[#3f2818]
+
+          /* PARCHMENT BASE */
+          bg-[#e8c98f]
+
+          /* AGED PAPER TEXTURE */
+          bg-[radial-gradient(circle_at_15%_20%,rgba(255,248,210,0.65),transparent_22%),radial-gradient(circle_at_85%_75%,rgba(105,65,25,0.25),transparent_28%),radial-gradient(circle_at_45%_55%,rgba(130,85,35,0.12),transparent_35%),linear-gradient(135deg,#f1d9a4,#dfbc7c_45%,#efd29a_70%,#d8ae6d)]
+
+          /* IRREGULAR OLD-PAPER SHAPE */
+          [clip-path:polygon(1%_3%,5%_1%,10%_3%,17%_1%,24%_3%,31%_1%,38%_2%,45%_1%,52%_3%,60%_1%,68%_3%,76%_1%,84%_3%,92%_1%,99%_4%,97%_12%,99%_20%,97%_28%,99%_36%,97%_45%,99%_54%,97%_63%,99%_72%,97%_82%,99%_91%,96%_98%,88%_96%,80%_98%,72%_96%,64%_98%,56%_96%,48%_98%,40%_96%,32%_98%,24%_96%,16%_98%,8%_96%,1%_99%,3%_91%,1%_82%,3%_73%,1%_64%,3%_55%,1%_46%,3%_37%,1%_28%,3%_19%,1%_10%)]
+        "
+      >
+        {/* DARK AGED EDGES */}
+        <div
+          className="
+            absolute inset-0
+            pointer-events-none
+            opacity-60
+            bg-[radial-gradient(ellipse_at_top_left,rgba(74,40,12,0.55),transparent_18%),radial-gradient(ellipse_at_top_right,rgba(74,40,12,0.55),transparent_18%),radial-gradient(ellipse_at_bottom_left,rgba(74,40,12,0.6),transparent_20%),radial-gradient(ellipse_at_bottom_right,rgba(74,40,12,0.6),transparent_20%),linear-gradient(to_right,rgba(90,50,15,0.18),transparent_8%,transparent_92%,rgba(90,50,15,0.18))]
+          "
+        />
+
+        {/* OLD PAPER STAINS */}
+        <div
+          className="
+            absolute
+            top-10
+            left-10
+            w-24
+            h-24
+            rounded-full
+            bg-[#7b4b20]/10
+            blur-xl
+            pointer-events-none
+          "
+        />
+
+        <div
+          className="
+            absolute
+            bottom-16
+            right-16
+            w-32
+            h-32
+            rounded-full
+            bg-[#704016]/10
+            blur-2xl
+            pointer-events-none
+          "
+        />
+
+        {/* CONTENT */}
+        <div className="relative z-10">
+
+          {/* DECORATIVE TOP */}
+          <div className="flex items-center justify-center gap-4 mb-2">
+            <span className="text-2xl opacity-80">❦</span>
+
+            <div className="h-px flex-1 bg-[#70451f]/50" />
+
+            <span className="text-xl">✦</span>
+
+            <div className="h-px flex-1 bg-[#70451f]/50" />
+
+            <span className="text-2xl opacity-80">❦</span>
+          </div>
+
+          {/* TITLE */}
+          <div className="text-center mb-6">
+            <h4
+              className="
+                text-3xl
+                md:text-4xl
+                font-serif
+                italic
+                font-bold
+                tracking-wide
+                drop-shadow-[1px_1px_0_rgba(80,40,10,0.2)]
+              "
+            >
+              Expense Items
+            </h4>
+
+            <p className="mt-2 text-sm md:text-base font-serif italic opacity-80">
+              A record of purchased items
+            </p>
+
+            {/* CATEGORY */}
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <span className="h-px w-16 bg-[#70451f]/50" />
+
+              <span
+                className="
+                  px-4
+                  py-1
+                  border-t
+                  border-b
+                  border-[#70451f]/50
+                  text-xs
+                  uppercase
+                  tracking-[0.3em]
+                  font-serif
+                  font-semibold
+                "
+              >
+                {transaction.category}
+              </span>
+
+              <span className="h-px w-16 bg-[#70451f]/50" />
+            </div>
+          </div>
+
+          {/* INNER PARCHMENT / LEDGER */}
+          <div
+            className="
+              relative
+              mx-auto
+              max-w-3xl
+              px-4
+              md:px-8
+              py-4
+              border
+              border-[#70451f]/50
+              shadow-[inset_0_0_25px_rgba(90,50,15,0.18)]
+              bg-[#efd29a]/50
+            "
+          >
+            {/* INNER DECORATION */}
+            <div className="absolute top-1 left-2 text-xl opacity-60">
+              ❧
+            </div>
+
+            <div className="absolute top-1 right-2 text-xl opacity-60">
+              ❧
+            </div>
+
+            {/* TABLE */}
+            <table className="w-full text-base md:text-lg font-serif">
+              <thead>
+                <tr className="border-b-2 border-[#70451f]/70">
+                  <th className="text-left py-3 font-bold italic">
+                    S.No.
+                  </th>
+
+                  <th className="text-left py-3 font-bold italic">
+                    Item
+                  </th>
+
+                  <th className="text-right py-3 font-bold italic">
+                    Price
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {transaction.items.map((item, index) => (
+                  <tr
+                    key={item._id || index}
+                    className="
+                      border-b
+                      border-[#70451f]/30
+                      hover:bg-[#b8864d]/10
+                      transition-colors
+                    "
+                  >
+                    <td className="py-3">
+                      {index + 1}.
+                    </td>
+
+                    <td className="py-3 font-medium">
+                      {item.name}
+                    </td>
+
+                    <td className="py-3 text-right font-medium">
+                      ₹
+                      {Number(item.price).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+
+                {/* TOTAL */}
+                <tr>
+                  <td
+                    colSpan="2"
+                    className="
+                      pt-5
+                      pb-2
+                      font-bold
+                      text-xl
+                      font-serif
+                      italic
+                    "
+                  >
+                    <span className="mr-2">〰</span>
+                    Total
+                  </td>
+
+                  <td
+                    className="
+                      pt-5
+                      pb-2
+                      text-right
+                      font-bold
+                      text-xl
+                      font-serif
+                    "
+                  >
+                    ₹
+                    {transaction.items
+                      .reduce(
+                        (total, item) =>
+                          total + Number(item.price || 0),
+                        0
+                      )
+                      .toLocaleString()}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* BOTTOM DECORATION */}
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <span className="text-xl opacity-70">❧</span>
+
+            <div className="h-px w-24 bg-[#70451f]/50" />
+
+            <span className="text-lg">◆</span>
+
+            <div className="h-px w-24 bg-[#70451f]/50" />
+
+            <span className="text-xl opacity-70">❧</span>
+          </div>
+
+          {/* FOOTER */}
+          <div className="flex justify-between items-end mt-5">
+            <span className="text-xs md:text-sm font-serif italic opacity-70">
+              — Recorded with care —
+            </span>
+
+            <span className="text-xs md:text-sm font-serif italic opacity-70">
+              Spend wisely, live better
+            </span>
+          </div>
+
+        </div>
+      </div>
+    </li>
+  )}            
+                
               </React.Fragment>
             ))}
           </ul>
