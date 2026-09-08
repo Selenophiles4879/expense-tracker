@@ -167,85 +167,110 @@ const WaxSeal = ({ id }) => (
   </svg>
 );
 
-const Quill = () => (
-  <svg viewBox="0 0 120 230" className="w-full h-full" fill="none" aria-hidden="true">
-    <defs>
-      <linearGradient id="quillVane" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#8a5a26" />
-        <stop offset="45%" stopColor="#5f3714" />
-        <stop offset="100%" stopColor="#2e1706" />
-      </linearGradient>
-      <filter id="quillShadow" x="-40%" y="-40%" width="180%" height="180%">
-        <feDropShadow dx="3" dy="5" stdDeviation="3" floodColor="#1a0d03" floodOpacity="0.45" />
-      </filter>
-    </defs>
+// Point + tangent along a quadratic Bézier — used to lay real barbs
+// along a curved spine, the way an actual flight feather is built.
+const quadPoint = (t, p0, c, p1) => {
+  const mt = 1 - t;
+  return {
+    x: mt * mt * p0.x + 2 * mt * t * c.x + t * t * p1.x,
+    y: mt * mt * p0.y + 2 * mt * t * c.y + t * t * p1.y,
+  };
+};
 
-    <g filter="url(#quillShadow)">
-      {/* SHAFT */}
-      <path d="M32 221C46 168 65 108 96 18" stroke="#2c1507" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M32 221C46 168 65 108 96 18" stroke="#8a5a26" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
+const quadTangent = (t, p0, c, p1) => {
+  const mt = 1 - t;
+  return {
+    x: 2 * mt * (c.x - p0.x) + 2 * t * (p1.x - c.x),
+    y: 2 * mt * (c.y - p0.y) + 2 * t * (p1.y - c.y),
+  };
+};
 
-      {/* FEATHER VANE — jagged silhouette, not a smooth leaf */}
-      <path
-        d="
-          M34 180
-          C22 172 14 160 12 146
-          C18 150 24 152 29 149
-          C16 141 8 128 8 112
-          C15 117 22 120 28 117
-          C14 107 8 92 11 76
-          C17 82 24 85 30 82
-          C18 71 14 56 20 41
-          C25 48 32 51 38 48
-          C29 37 27 22 34 9
-          C40 20 47 27 55 30
-          C50 43 46 55 43 66
-          C50 61 56 60 61 63
-          C55 76 49 88 44 99
-          C51 95 57 95 62 99
-          C55 113 48 126 42 138
-          C49 135 55 136 59 141
-          C51 154 43 167 34 180
-          Z
-        "
-        fill="url(#quillVane)"
-        stroke="#201004"
-        strokeWidth="1.4"
-      />
+const buildFeatherBarbs = () => {
+  // spine: base of the vane -> feather tip
+  const p0 = { x: 30, y: 196 };
+  const c = { x: 40, y: 104 };
+  const p1 = { x: 93, y: 12 };
 
-      {/* CENTRAL RACHIS */}
-      <path d="M33 178C46 132 63 82 94 16" stroke="#d8b077" strokeWidth="1.6" opacity="0.85" />
+  const barbs = [];
+  const count = 26;
 
-      {/* BARBS — thin feathery strokes off the rachis, alternating sides */}
-      <path
-        d="
-          M38 168L20 158M42 156L22 144M46 144L25 130
-          M50 132L28 116M54 120L31 102M58 108L35 88
-          M62 96L39 74M66 84L44 60M70 72L49 47
-          M74 60L54 34M78 48L59 22
-        "
-        stroke="#dcb679"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-        opacity="0.75"
-      />
-      <path
-        d="
-          M40 172L52 176M45 160L57 165M49 147L61 152
-          M53 135L64 140M57 122L68 128M61 110L71 116
-          M65 98L74 104M69 85L77 92M73 73L80 79
-        "
-        stroke="#3a2008"
-        strokeWidth="1"
-        strokeLinecap="round"
-        opacity="0.55"
-      />
+  for (let i = 1; i < count; i++) {
+    const t = i / count;
+    const pt = quadPoint(t, p0, c, p1);
+    const tan = quadTangent(t, p0, c, p1);
+    const tanLen = Math.hypot(tan.x, tan.y) || 1;
+    const ux = tan.x / tanLen;
+    const uy = tan.y / tanLen;
+    // normal (perpendicular) to the spine
+    const nx = -uy;
+    const ny = ux;
 
-      {/* NIB TIP */}
-      <path d="M30 214L34 202L38 214Z" fill="#241206" />
-    </g>
-  </svg>
-);
+    // envelope: feather is narrow near the tip, widest a bit past
+    // the middle, and fades out again toward the base of the vane
+    const envelope = Math.sin(Math.PI * Math.pow(t, 0.65)) * (1 - t * 0.25);
+    const len = 7 + envelope * 27;
+
+    [1, -1].forEach((side) => {
+      // barb sweeps backward (toward the base) and outward, with a
+      // gentle forward curl near its tip like a real vane barb
+      const backX = -ux;
+      const backY = -uy;
+      const midX = pt.x + nx * side * len * 0.85 + backX * len * 0.22;
+      const midY = pt.y + ny * side * len * 0.85 + backY * len * 0.22;
+      const endX = pt.x + nx * side * len * 0.55 + backX * len * 0.92;
+      const endY = pt.y + ny * side * len * 0.55 + backY * len * 0.92;
+
+      barbs.push({
+        key: `${i}-${side}`,
+        d: `M${pt.x.toFixed(1)} ${pt.y.toFixed(1)} Q${midX.toFixed(1)} ${midY.toFixed(1)} ${endX.toFixed(1)} ${endY.toFixed(1)}`,
+        opacity: 0.5 + envelope * 0.45,
+        width: 0.7 + envelope * 1.3,
+        dark: side === -1,
+      });
+    });
+  }
+
+  return barbs;
+};
+
+const Quill = () => {
+  const barbs = React.useMemo(buildFeatherBarbs, []);
+
+  return (
+    <svg viewBox="0 0 120 230" className="w-full h-full" fill="none" aria-hidden="true">
+      <defs>
+        <filter id="quillShadow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="3" dy="5" stdDeviation="3" floodColor="#1a0d03" floodOpacity="0.45" />
+        </filter>
+      </defs>
+
+      <g filter="url(#quillShadow)">
+        {/* SHAFT — bare quill below the vane, down to the nib */}
+        <path d="M18 224L30 196" stroke="#241206" strokeWidth="2.6" strokeLinecap="round" />
+
+        {/* RACHIS — the central spine the barbs radiate from */}
+        <path d="M30 196Q40 104 93 12" stroke="#2a1608" strokeWidth="2" strokeLinecap="round" />
+        <path d="M30 196Q40 104 93 12" stroke="#d8b077" strokeWidth="0.7" opacity="0.5" />
+
+        {/* BARBS — individually curved feather strands, light + dark
+            alternating for a soft ruffled, sunlit look */}
+        {barbs.map((b) => (
+          <path
+            key={b.key}
+            d={b.d}
+            stroke={b.dark ? "#3a2008" : "#c99a5c"}
+            strokeWidth={b.width}
+            strokeLinecap="round"
+            opacity={b.opacity}
+          />
+        ))}
+
+        {/* NIB TIP */}
+        <path d="M14 231L18 216L22 231Z" fill="#1c0e04" />
+      </g>
+    </svg>
+  );
+};
 
 const TransactionList = () => {
   const navigate = useNavigate();
