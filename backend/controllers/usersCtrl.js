@@ -2,28 +2,171 @@ const asyncHandler = require("express-async-handler");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../model/User");
-const {sendEmail} = require("../utils/sendEmail"); // <-- CHECK THIS LINE
-const crypto = require("crypto"); // <-- CHECK THIS LINE
+const { sendEmail } = require("../utils/sendEmail");
+const crypto = require("crypto");
 
+// ---------------------------------------------------------
+// SEND EMAIL VERIFICATION
+// ---------------------------------------------------------
+const sendVerificationEmail = async (user, subject = "Verify your email address") => {
+  const verifyToken = user.createEmailVerificationToken();
+
+  await user.save({ validateBeforeSave: false });
+
+  const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+
+  await sendEmail({
+    to: user.email,
+    subject,
+    htmlContent: `
+      <div style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5; color:#333;">
+
+        <p>
+          Hi <strong>${user.username}</strong>,
+        </p>
+
+        <p>
+          We received a request to verify your Email for your Expense Tracker account.
+        </p>
+
+        <p>
+          Please click the button below to verify your Email.
+          This link will expire in <strong>10 minutes</strong>.
+        </p>
+
+        <div style="text-align:center; margin:30px 0;">
+          <a
+            href="${verifyURL}"
+            style="
+              background-color:#4CAF50;
+              color:white;
+              padding:12px 25px;
+              text-decoration:none;
+              border-radius:5px;
+              font-weight:bold;
+              font-family:Arial, sans-serif;
+              display:inline-block;
+              min-width:150px;
+              width:80%;
+              max-width:250px;
+              box-sizing:border-box;
+            "
+          >
+            Verify Email
+          </a>
+        </div>
+
+        <p>
+          If you are not trying to verify your Email for your Expense Tracker
+          account, you can safely ignore this email.
+        </p>
+
+        <p style="font-size:14px; line-height:1.6; color:#b71c1c;">
+          This is a secure message. Please do not share this link with anyone.
+          The link will expire after one use.
+        </p>
+
+        <p>
+          Thanks,<br/>
+          Expense Tracker Team
+        </p>
+
+      </div>
+    `,
+  });
+};
+
+
+// ---------------------------------------------------------
+// CONTROLLER
+// ---------------------------------------------------------
 const usersController = {
-  //! REGISTER
- register: asyncHandler(async (req, res) => {
+
+  // =======================================================
+  // REGISTER
+  // =======================================================
+  register: asyncHandler(async (req, res) => {
     const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
+      res.status(400);
       throw new Error("All fields are required");
     }
 
-    if (await User.findOne({ email })) {
-      res.status(409);
-      throw new Error("This email is already registered.");
+    // -----------------------------------------------------
+    // CHECK EXISTING EMAIL
+    // -----------------------------------------------------
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+
+      // ---------------------------------------------------
+      // EXISTING + VERIFIED
+      // ---------------------------------------------------
+      if (existingUser.isEmailVerified) {
+        res.status(409);
+        throw new Error("This email is already registered. Please login instead.");
+      }
+
+      // ---------------------------------------------------
+      // EXISTING + NOT VERIFIED
+      // ---------------------------------------------------
+
+      // Verification link is missing or expired
+      const verificationExpired =
+        !existingUser.emailVerificationToken ||
+        !existingUser.emailVerificationExpires ||
+        existingUser.emailVerificationExpires < Date.now();
+
+      if (verificationExpired) {
+
+        // Generate a fresh verification token
+        try {
+          await sendVerificationEmail(
+            existingUser,
+            "Verify your email address"
+          );
+
+          return res.status(409).json({
+            message:
+              "This email is already registered but not verified. Your previous verification link has expired, so a new verification email has been sent. Please verify your email first."
+          });
+
+        } catch (error) {
+          console.error(
+            "Verification email resend failed:",
+            error
+          );
+
+          res.status(500);
+          throw new Error(
+            "We could not send the verification email. Please try again later."
+          );
+        }
+      }
+
+      // ---------------------------------------------------
+      // EXISTING + NOT VERIFIED + TOKEN STILL VALID
+      // ---------------------------------------------------
+      return res.status(409).json({
+        message:
+          "This email is already registered but not verified. Please verify your email first using the verification link that was sent to you."
+      });
     }
 
-    if (await User.findOne({ username })) {
+    // -----------------------------------------------------
+    // CHECK USERNAME
+    // -----------------------------------------------------
+    const existingUsername = await User.findOne({ username });
+
+    if (existingUsername) {
       res.status(409);
       throw new Error("The username is already taken.");
     }
 
+    // -----------------------------------------------------
+    // CREATE NEW USER
+    // -----------------------------------------------------
     const hashed = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -33,202 +176,194 @@ const usersController = {
       isEmailVerified: false,
     });
 
-    // ✅ SEND EMAIL ONLY IF TOKEN DOES NOT EXIST OR IS EXPIRED
-    if (
-      !user.emailVerificationToken ||
-      !user.emailVerificationExpires ||
-      user.emailVerificationExpires < Date.now()
-    ) {
-      const verifyToken = user.createEmailVerificationToken();
-      await user.save({ validateBeforeSave: false });
+    // -----------------------------------------------------
+    // SEND VERIFICATION EMAIL
+    // -----------------------------------------------------
+    try {
+      await sendVerificationEmail(
+        user,
+        "Verify your email address"
+      );
+    } catch (error) {
+      console.error(
+        "Verification email failed:",
+        error
+      );
 
-      const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+      // Remove the user if verification email could not be sent
+      await User.findByIdAndDelete(user._id);
 
-      try {
-        await sendEmail({
-          to: user.email,
-          subject: "Verify your email address",
-          htmlContent: `
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Hi <strong>${user.username}</strong>,
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  We received a request to verify your Email for your Expense Tracker account.
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Please click the button below to verify your Email. This link will expire in <strong>10 minutes</strong>.
-</p>
-
-<div style="text-align:center; margin:30px 0;">
-  <a href="${verifyURL}" 
-     style="
-       background-color: #4CAF50; 
-       color: white; 
-       padding: 12px 25px; 
-       text-decoration: none; 
-       border-radius: 5px;
-       font-weight: bold;
-       font-family: Arial, sans-serif;
-       display: inline-block;
-       min-width: 150px;
-       width: 80%;
-       max-width: 250px;
-       box-sizing: border-box;
-     ">
-     Verify Email
-  </a>
-</div>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  If you are not trying to verify your Email for Registration, you can safely ignore this email.
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #b71c1c;">
-  This is a secure message. Please do not share this link with anyone.
-  The link will expire after one use.
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Thanks,<br/>Expense Tracker Team
-</p>
-`,
-        });
-      } catch (err) {
-        console.error("❌ Verification email failed:", err);
-      }
+      res.status(500);
+      throw new Error(
+        "Registration completed, but we could not send the verification email. Please try again."
+      );
     }
 
     res.status(201).json({
-      message: "Registration successful. Please verify your email.",
+      message:
+        "Registration successful. Please check your email to verify your account.",
     });
   }),
 
-  //EMAIL VERIFY
- verifyEmail: asyncHandler(async (req, res) => {
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
 
-  const user = await User.findOneAndUpdate(
-    {
-      emailVerificationToken: hashedToken,
-      emailVerificationExpires: { $gt: Date.now() },
-    },
-    {
-      $set: {
-        isEmailVerified: true,
-        emailVerificationToken: null,
-        emailVerificationExpires: null,
+  // =======================================================
+  // VERIFY EMAIL
+  // =======================================================
+  verifyEmail: asyncHandler(async (req, res) => {
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = await User.findOneAndUpdate(
+      {
+        emailVerificationToken: hashedToken,
+        emailVerificationExpires: {
+          $gt: Date.now(),
+        },
       },
-    },
-    { new: true }
-  );
+      {
+        $set: {
+          isEmailVerified: true,
+          emailVerificationToken: null,
+          emailVerificationExpires: null,
+        },
+      },
+      {
+        new: true,
+      }
+    );
 
-  if (!user) {
-    res.status(400);
-    throw new Error("Verification link is invalid or expired");
-  }
+    if (!user) {
+      res.status(400);
+      throw new Error(
+        "Verification link is invalid or expired"
+      );
+    }
 
-  res.json({ message: "Email verified successfully" });
-}),
+    res.json({
+      message: "Email verified successfully",
+    });
+  }),
 
-  
-  //! LOGIN
+
+  // =======================================================
+  // LOGIN
+  // =======================================================
   login: asyncHandler(async (req, res) => {
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
 
-if (!user) {
-  res.status(404);
-  throw new Error("User not found. Please check your email.");
-}
-
-const isMatch = await bcrypt.compare(password, user.password);
-
-if (!isMatch) {
-  res.status(401);
-  throw new Error("Incorrect password. Please try again.");
-};
-
-    if (!user.isEmailVerified) {
-      // ✅ SEND ONLY IF TOKEN EXPIRED
-      if (
-        !user.emailVerificationToken ||
-        !user.emailVerificationExpires ||
-        user.emailVerificationExpires < Date.now()
-      ) {
-        const verifyToken = user.createEmailVerificationToken();
-        await user.save({ validateBeforeSave: false });
-
-        const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
-
-        await sendEmail({
-          to: user.email,
-          subject: "Verify your email address",
-          htmlContent: `
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Hi <strong>${user.username}</strong>,
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  We received a request to verify your Email for your Expense Tracker account.
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Please click the button below to verify your Email. This link will expire in <strong>15 minutes</strong>.
-</p>
-
-<div style="text-align:center; margin:30px 0;">
-  <a href="${verifyURL}" 
-     style="
-       background-color: #4CAF50; 
-       color: white; 
-       padding: 12px 25px; 
-       text-decoration: none; 
-       border-radius: 5px;
-       font-weight: bold;
-       font-family: Arial, sans-serif;
-       display: inline-block;
-       min-width: 150px;
-       width: 80%;
-       max-width: 250px;
-       box-sizing: border-box;
-     ">
-     Verify Email
-  </a>
-</div>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  If you are not trying to verify your Email for Registration, you can safely ignore this email.
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #b71c1c;">
-  This is a secure message. Please do not share this link with anyone.
-  The link will expire after one use.
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Thanks,<br/>Expense Tracker Team
-</p>
-`,
-        });
-      }
-
-      res.status(403);
-      throw new Error("Please verify your email before logging in.");
+    // -----------------------------------------------------
+    // USER NOT FOUND
+    // -----------------------------------------------------
+    if (!user) {
+      res.status(404);
+      throw new Error(
+        "User not found. Please check your email."
+      );
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1d",
-    });
+    // -----------------------------------------------------
+    // PASSWORD CHECK
+    // -----------------------------------------------------
+    const isMatch = await bcrypt.compare(
+      password,
+      user.password
+    );
 
+    if (!isMatch) {
+      res.status(401);
+      throw new Error(
+        "Incorrect password. Please try again."
+      );
+    }
+
+    // -----------------------------------------------------
+    // EMAIL VERIFICATION CHECK
+    // -----------------------------------------------------
+    if (!user.isEmailVerified) {
+
+      const verificationExpired =
+        !user.emailVerificationToken ||
+        !user.emailVerificationExpires ||
+        user.emailVerificationExpires < Date.now();
+
+      // ---------------------------------------------------
+      // TOKEN EXPIRED → SEND NEW EMAIL
+      // ---------------------------------------------------
+      if (verificationExpired) {
+
+        try {
+
+          await sendVerificationEmail(
+            user,
+            "Verify your email address"
+          );
+
+          res.status(403);
+
+          throw new Error(
+            "Please verify your email first. Your previous verification link has expired, so a new verification email has been sent."
+          );
+
+        } catch (error) {
+
+          // Do not convert our intended 403 message
+          if (
+            error.message ===
+            "Please verify your email first. Your previous verification link has expired, so a new verification email has been sent."
+          ) {
+            throw error;
+          }
+
+          console.error(
+            "Verification email resend failed:",
+            error
+          );
+
+          res.status(500);
+
+          throw new Error(
+            "We could not send a new verification email. Please try again later."
+          );
+        }
+      }
+
+      // ---------------------------------------------------
+      // TOKEN STILL VALID
+      // ---------------------------------------------------
+      res.status(403);
+
+      throw new Error(
+        "Please verify your email first using the verification link that was sent to you."
+      );
+    }
+
+    // -----------------------------------------------------
+    // CREATE JWT
+    // -----------------------------------------------------
+    const token = jwt.sign(
+      {
+        id: user._id,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    // -----------------------------------------------------
+    // LOGIN SUCCESS
+    // -----------------------------------------------------
     res.json({
       message: "Login successful",
+
       token,
+
       user: {
         id: user._id,
         username: user.username,
@@ -238,79 +373,122 @@ if (!isMatch) {
     });
   }),
 
-  //! UPDATE PROFILE
+
+  // =======================================================
+  // UPDATE PROFILE
+  // =======================================================
   updateUserProfile: asyncHandler(async (req, res) => {
+
     const { email, username } = req.body;
+
     const user = await User.findById(req.user.id);
 
-    if (!user) throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
 
+    // -----------------------------------------------------
+    // EMAIL CHANGE
+    // -----------------------------------------------------
     if (email && email !== user.email) {
-      if (await User.findOne({ email })) {
+
+      const emailExists = await User.findOne({ email });
+
+      if (emailExists) {
         res.status(409);
-        throw new Error("This email is already taken by another user.");
+        throw new Error(
+          "This email is already taken by another user."
+        );
       }
 
       user.email = email;
       user.isEmailVerified = false;
 
-      // ✅ SEND ONLY IF TOKEN EXPIRED
-      if (
-        !user.emailVerificationToken ||
-        !user.emailVerificationExpires ||
-        user.emailVerificationExpires < Date.now()
-      ) {
-        const verifyToken = user.createEmailVerificationToken();
-        await user.save({ validateBeforeSave: false });
+      // Generate new verification token
+      const verifyToken = user.createEmailVerificationToken();
 
-        const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
+      await user.save({
+        validateBeforeSave: false,
+      });
 
-        await sendEmail({
-          to: email,
-          subject: "Verify your new email",
-          htmlContent: `
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Hi <strong>${user.username}</strong>,
-</p>
+      const verifyURL =
+        `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
 
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Please click the button below to verify your Email. This link will expire in <strong>10 minutes</strong>.
-</p>
+      await sendEmail({
+        to: email,
+        subject: "Verify your new email",
+        htmlContent: `
+          <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#333;">
 
-<div style="text-align:center; margin:30px 0;">
-  <a href="${verifyURL}" 
-     style="
-       background-color: #4CAF50; 
-       color: white; 
-       padding: 12px 25px; 
-       text-decoration: none; 
-       border-radius: 5px;
-       font-weight: bold;
-       font-family: Arial, sans-serif;
-       display: inline-block;
-       min-width: 150px;
-       width: 80%;
-       max-width: 250px;
-       box-sizing: border-box;
-     ">
-     Verify Email
-  </a>
-</div>
+            <p>
+              Hi <strong>${user.username}</strong>,
+            </p>
 
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Thanks,<br/>Expense Tracker Team
-</p>
-`,
-        });
-      }
+            <p>
+              You recently changed the email address associated
+              with your Expense Tracker account.
+            </p>
+
+            <p>
+              Please click the button below to verify your new Email.
+              This link will expire in <strong>10 minutes</strong>.
+            </p>
+
+            <div style="text-align:center;margin:30px 0;">
+              <a
+                href="${verifyURL}"
+                style="
+                  background-color:#4CAF50;
+                  color:white;
+                  padding:12px 25px;
+                  text-decoration:none;
+                  border-radius:5px;
+                  font-weight:bold;
+                  display:inline-block;
+                  min-width:150px;
+                  width:80%;
+                  max-width:250px;
+                  box-sizing:border-box;
+                "
+              >
+                Verify Email
+              </a>
+            </div>
+
+            <p>
+              Thanks,<br/>
+              Expense Tracker Team
+            </p>
+
+          </div>
+        `,
+      });
     }
 
-    if (username) user.username = username;
+    // -----------------------------------------------------
+    // USERNAME CHANGE
+    // -----------------------------------------------------
+    if (username && username !== user.username) {
+
+      const usernameExists = await User.findOne({
+        username,
+      });
+
+      if (usernameExists) {
+        res.status(409);
+        throw new Error(
+          "This username is already taken by another user."
+        );
+      }
+
+      user.username = username;
+    }
 
     const updatedUser = await user.save();
 
     res.json({
       message: "Profile updated successfully",
+
       user: {
         id: updatedUser._id,
         username: updatedUser.username,
@@ -319,142 +497,179 @@ if (!isMatch) {
     });
   }),
 
-// --- ADD THIS NEW FUNCTION ---
-  //! FORGOT PASSWORD
-    //! FORGOT PASSWORD
+
+  // =======================================================
+  // FORGOT PASSWORD
+  // =======================================================
   forgotPassword: asyncHandler(async (req, res) => {
+
     const { email } = req.body;
 
     if (!email) {
-      // Bad request from client
       res.status(400);
-      throw new Error("Please provide an email address");
+      throw new Error(
+        "Please provide an email address"
+      );
     }
 
     const user = await User.findOne({ email });
 
-    // Security: always respond the same way to avoid leaking valid emails
+    // Security: don't reveal whether email exists
     if (!user) {
-      return res.json({ message: "If your email is registered, you will receive a reset link." });
+      return res.json({
+        message:
+          "If your email is registered, you will receive a reset link.",
+      });
     }
 
-    // Generate token and persist hashed token to DB via model method
-    const resetToken = user.createPasswordResetToken();
-    await user.save({ validateBeforeSave: false });
+    const resetToken =
+      user.createPasswordResetToken();
 
-    // Interpolate the real FRONTEND URL from env (note the backticks)
-    const resetURL = `${process.env.FRONTEND_URL}/users/reset-password/${resetToken}`;
+    await user.save({
+      validateBeforeSave: false,
+    });
 
-    //const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}\nIf you didn't forget your password, please ignore this email.`;
-    // --- START: CHANGE MESSAGE CONTENT TO INCLUDE HTML ---
-    const subject = "Your Password Reset Request";
-    const message = `You requested a password reset. Please use this link: ${resetURL}`;
-    
-    // HTML is highly recommended for a clickable button
+    const resetURL =
+      `${process.env.FRONTEND_URL}/users/reset-password/${resetToken}`;
+
     const htmlMessage = `
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Hi <strong>${user.username}</strong>,
-</p>
+      <p style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;">
+        Hi <strong>${user.username}</strong>,
+      </p>
 
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  We received a request to reset your password for your Expense Tracker account.
-</p>
+      <p style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;">
+        We received a request to reset your password
+        for your Expense Tracker account.
+      </p>
 
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Please click the button below to reset your password. This link will expire in <strong>10 minutes</strong>.
-</p>
+      <p style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;">
+        Please click the button below to reset your password.
+        This link will expire in <strong>10 minutes</strong>.
+      </p>
 
-<div style="text-align:center; margin:30px 0;">
-  <a href="${resetURL}" 
-     style="
-       background-color: #4CAF50; 
-       color: white; 
-       padding: 12px 25px; 
-       text-decoration: none; 
-       border-radius: 5px;
-       font-weight: bold;
-       font-family: Arial, sans-serif;
-       display: inline-block;
-       min-width: 150px;
-       width: 80%;
-       max-width: 250px;
-       box-sizing: border-box;
-     ">
-     Reset Password
-  </a>
-</div>
+      <div style="text-align:center;margin:30px 0;">
+        <a
+          href="${resetURL}"
+          style="
+            background-color:#4CAF50;
+            color:white;
+            padding:12px 25px;
+            text-decoration:none;
+            border-radius:5px;
+            font-weight:bold;
+            display:inline-block;
+            min-width:150px;
+            width:80%;
+            max-width:250px;
+            box-sizing:border-box;
+          "
+        >
+          Reset Password
+        </a>
+      </div>
 
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  If you did not request a password reset, you can safely ignore this email.
-</p>
+      <p>
+        If you did not request a password reset,
+        you can safely ignore this email.
+      </p>
 
-<p style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #b71c1c;">
-  This is a secure message. Please do not share this link with anyone.
-  The link will expire after one use.
-</p>
+      <p style="font-size:14px;color:#b71c1c;">
+        This is a secure message.
+        Please do not share this link with anyone.
+        The link will expire after one use.
+      </p>
 
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Thanks,<br/>Expense Tracker Team
-</p>
-`;
-    // --- END: CHANGE MESSAGE CONTENT TO INCLUDE HTML ---
+      <p>
+        Thanks,<br/>
+        Expense Tracker Team
+      </p>
+    `;
 
     try {
+
       await sendEmail({
         to: user.email,
-        subject,
-        //message,
-        htmlContent: htmlMessage, // <-- PASS THE HTML CONTENT HERE
+        subject: "Your Password Reset Request",
+        htmlContent: htmlMessage,
       });
 
-      return res.json({ message: "If your email is registered, you will receive a reset link." });
+      return res.json({
+        message:
+          "If your email is registered, you will receive a reset link.",
+      });
+
     } catch (err) {
-      // rollback token fields on failure to send email
+
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
-      await user.save({ validateBeforeSave: false });
 
-      console.error("Error sending reset email:", err);
+      await user.save({
+        validateBeforeSave: false,
+      });
+
+      console.error(
+        "Error sending reset email:",
+        err
+      );
+
       res.status(500);
-      throw new Error("There was an error sending the email. Try again later.");
+
+      throw new Error(
+        "There was an error sending the email. Try again later."
+      );
     }
   }),
 
-  // --- ADD THIS NEW FUNCTION ---
-  //! RESET PASSWORD
+
+  // =======================================================
+  // RESET PASSWORD
+  // =======================================================
   resetPassword: asyncHandler(async (req, res) => {
-    // 1. Get the token from the URL and hash it
+
     const hashedToken = crypto
       .createHash("sha256")
       .update(req.params.token)
       .digest("hex");
 
-    // 2. Find user by the *hashed* token and check if it's expired
     const user = await User.findOne({
       passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: Date.now() },
+      passwordResetExpires: {
+        $gt: Date.now(),
+      },
     });
 
-    // 3. If token is invalid or expired
     if (!user) {
-      throw new Error("Token is invalid or has expired");
+      throw new Error(
+        "Token is invalid or has expired"
+      );
     }
 
-    // 4. Set the new password
     const { password } = req.body;
+
     const salt = await bcrypt.genSalt(10);
-    const hashed = await bcrypt.hash(password, salt);
-    
+
+    const hashed =
+      await bcrypt.hash(password, salt);
+
     user.password = hashed;
-    user.passwordResetToken = undefined; // Invalidate the token
-    user.passwordResetExpires = undefined; // Invalidate the token
+
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
     await user.save();
 
-    res.json({ message: "Password reset successfully. Please login." });
+    res.json({
+      message:
+        "Password reset successfully. Please login.",
+    });
   }),
 
-  //! PROFILE
+
+  // =======================================================
+  // PROFILE
+  // =======================================================
   profile: asyncHandler(async (req, res) => {
+
     const user = await User.findById(req.user.id);
 
     if (!user) {
@@ -470,116 +685,35 @@ if (!isMatch) {
     });
   }),
 
-  //! CHANGE PASSWORD
+
+  // =======================================================
+  // CHANGE PASSWORD
+  // =======================================================
   changeUserPassword: asyncHandler(async (req, res) => {
+
     const { newPassword } = req.body;
 
     const user = await User.findById(req.user.id);
+
     if (!user) {
       throw new Error("User not found");
     }
 
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
 
-    await user.save({ validateBeforeSave: false });
+    user.password =
+      await bcrypt.hash(newPassword, salt);
 
-    res.json({ message: "Password changed successfully" });
-  }),
-
-  //! UPDATE PROFILE
-updateUserProfile: asyncHandler(async (req, res) => {
-    const { email, username } = req.body;
-    const userId = req.user.id;
-
-    // 1. Check if the user exists
-    let user = await User.findById(userId);
-
-    if (!user) {
-        throw new Error("User not found");
-    }
-    
-    // --- NEW: Pre-validation to prevent E11000 error ---
-
-    // 2. Check for duplicate email (excluding the current user)
-    if (email && email !== user.email) {
-        const emailExists = await User.findOne({ email });
-        if (emailExists) {
-            // Throw an error that will be caught by asyncHandler/error middleware
-            res.status(409); // 409 Conflict
-            throw new Error("This email is already taken by another user.");
-        }
-    }
-
-    // 3. Check for duplicate username (excluding the current user)
-    if (username && username !== user.username) {
-        const usernameExists = await User.findOne({ username });
-        if (usernameExists) {
-            // Throw an error that will be caught by asyncHandler/error middleware
-            res.status(409); // 409 Conflict
-            throw new Error("This username is already taken by another user.");
-        }
-    }
-    
-    // --- End of new checks ---
-
-    // 4. Safely apply and save the updates
-    // Use the document's save method instead of findByIdAndUpdate to ensure validation runs
-    //if (email) user.email = email;
-    if (email && email !== user.email) {
-    user.email = email;
-    user.isEmailVerified = false;
-    const verifyToken = user.createEmailVerificationToken();
-    await user.save({ validateBeforeSave: false });
-   const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
-  await sendEmail({
-    to: email,
-    subject: "Verify your new email",
-    htmlContent: `<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Hi <strong>${user.username}</strong>,
-</p>
-
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Please click the button below to verify your Email. This link will expire in <strong>10 minutes</strong>.
-</p>
-<div style="text-align:center; margin:30px 0;">
-  <a href="${verifyURL}" 
-     style="
-       background-color: #4CAF50; 
-       color: white; 
-       padding: 12px 25px; 
-       text-decoration: none; 
-       border-radius: 5px;
-       font-weight: bold;
-       font-family: Arial, sans-serif;
-       display: inline-block;
-       min-width: 150px;
-       width: 80%;
-       max-width: 250px;
-       box-sizing: border-box;
-     ">
-     Verify Email
-  </a>
-</div>
-<p style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5;">
-  Thanks,<br/>Expense Tracker Team
-</p>`,
-  });
-}
-
-    if (username) user.username = username;
-    
-    const updatedUser = await user.save(); 
+    await user.save({
+      validateBeforeSave: false,
+    });
 
     res.json({
-        message: "Profile updated successfully",
-        user: {
-            id: updatedUser._id,
-            username: updatedUser.username,
-            email: updatedUser.email,
-        },
+      message:
+        "Password changed successfully",
     });
   }),
 };
+
 
 module.exports = usersController;
