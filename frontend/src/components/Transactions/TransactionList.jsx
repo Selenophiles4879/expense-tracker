@@ -119,30 +119,35 @@ const Compass = () => (
 const WaxSeal = ({ id }) => (
   <svg viewBox="0 0 150 190" className="w-full h-full" aria-hidden="true">
     <defs>
+      <filter id={`wax-shadow-${id}`} x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow dx="2" dy="4" stdDeviation="3" floodColor="#1a0603" floodOpacity="0.5" />
+      </filter>
       <radialGradient id={`wax-${id}`} cx="35%" cy="28%">
         <stop offset="0%" stopColor="#c95a46" />
         <stop offset="42%" stopColor="#8e2d20" />
         <stop offset="100%" stopColor="#4b100b" />
       </radialGradient>
     </defs>
-    <path
-      d="M75 8C88 4 96 16 108 18C122 19 129 31 125 43C137 53 133 67 126 76C132 89 121 102 110 103C101 116 87 112 77 121C65 116 53 120 43 111C29 111 20 99 24 87C13 77 18 62 24 53C19 39 29 28 42 27C50 15 64 18 75 8Z"
-      fill={`url(#wax-${id})`}
-      stroke="#54130e"
-      strokeWidth="3"
-    />
-    <circle cx="75" cy="68" r="39" fill="none" stroke="#4b100b" strokeWidth="3" />
-    <circle cx="75" cy="68" r="32" fill="none" stroke="#c76a58" strokeWidth="1.5" />
-    <path
-      d="M75 43V94M75 57L58 46M75 61L92 48M75 70L56 60M75 73L95 60M64 95H86"
-      stroke="#45100c"
-      strokeWidth="4"
-      strokeLinecap="round"
-    />
-    <circle cx="58" cy="46" r="6" fill="#55140e" />
-    <circle cx="92" cy="48" r="6" fill="#55140e" />
-    <circle cx="56" cy="60" r="6" fill="#55140e" />
-    <circle cx="95" cy="60" r="6" fill="#55140e" />
+    <g filter={`url(#wax-shadow-${id})`}>
+      <path
+        d="M75 8C88 4 96 16 108 18C122 19 129 31 125 43C137 53 133 67 126 76C132 89 121 102 110 103C101 116 87 112 77 121C65 116 53 120 43 111C29 111 20 99 24 87C13 77 18 62 24 53C19 39 29 28 42 27C50 15 64 18 75 8Z"
+        fill={`url(#wax-${id})`}
+        stroke="#54130e"
+        strokeWidth="3"
+      />
+      <circle cx="75" cy="68" r="39" fill="none" stroke="#4b100b" strokeWidth="3" />
+      <circle cx="75" cy="68" r="32" fill="none" stroke="#c76a58" strokeWidth="1.5" />
+      <path
+        d="M75 43V94M75 57L58 46M75 61L92 48M75 70L56 60M75 73L95 60M64 95H86"
+        stroke="#45100c"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <circle cx="58" cy="46" r="6" fill="#55140e" />
+      <circle cx="92" cy="48" r="6" fill="#55140e" />
+      <circle cx="56" cy="60" r="6" fill="#55140e" />
+      <circle cx="95" cy="60" r="6" fill="#55140e" />
+    </g>
 
     {/* TWINE */}
     <path
@@ -163,20 +168,82 @@ const WaxSeal = ({ id }) => (
 );
 
 const Quill = () => (
-  <svg viewBox="0 0 120 220" className="w-full h-full" fill="none" aria-hidden="true">
-    <path d="M30 211C44 161 63 103 95 16" stroke="#3d1d08" strokeWidth="4" strokeLinecap="round" />
-    <path
-      d="M32 174C8 148 8 108 23 76C39 44 67 22 101 9C102 45 91 79 72 109C56 134 42 158 32 174Z"
-      fill="#684018"
-      stroke="#3b1c08"
-      strokeWidth="2"
-    />
-    <path d="M30 174C50 125 72 77 100 11" stroke="#d1a05e" strokeWidth="2" />
-    <path
-      d="M42 145L17 126M48 130L18 106M55 113L22 87M62 97L31 69M70 80L43 54M77 63L55 42M84 45L67 29M91 29L79 20"
-      stroke="#c39254"
-      strokeWidth="2"
-    />
+  <svg viewBox="0 0 120 230" className="w-full h-full" fill="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="quillVane" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#8a5a26" />
+        <stop offset="45%" stopColor="#5f3714" />
+        <stop offset="100%" stopColor="#2e1706" />
+      </linearGradient>
+      <filter id="quillShadow" x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow dx="3" dy="5" stdDeviation="3" floodColor="#1a0d03" floodOpacity="0.45" />
+      </filter>
+    </defs>
+
+    <g filter="url(#quillShadow)">
+      {/* SHAFT */}
+      <path d="M32 221C46 168 65 108 96 18" stroke="#2c1507" strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M32 221C46 168 65 108 96 18" stroke="#8a5a26" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
+
+      {/* FEATHER VANE — jagged silhouette, not a smooth leaf */}
+      <path
+        d="
+          M34 180
+          C22 172 14 160 12 146
+          C18 150 24 152 29 149
+          C16 141 8 128 8 112
+          C15 117 22 120 28 117
+          C14 107 8 92 11 76
+          C17 82 24 85 30 82
+          C18 71 14 56 20 41
+          C25 48 32 51 38 48
+          C29 37 27 22 34 9
+          C40 20 47 27 55 30
+          C50 43 46 55 43 66
+          C50 61 56 60 61 63
+          C55 76 49 88 44 99
+          C51 95 57 95 62 99
+          C55 113 48 126 42 138
+          C49 135 55 136 59 141
+          C51 154 43 167 34 180
+          Z
+        "
+        fill="url(#quillVane)"
+        stroke="#201004"
+        strokeWidth="1.4"
+      />
+
+      {/* CENTRAL RACHIS */}
+      <path d="M33 178C46 132 63 82 94 16" stroke="#d8b077" strokeWidth="1.6" opacity="0.85" />
+
+      {/* BARBS — thin feathery strokes off the rachis, alternating sides */}
+      <path
+        d="
+          M38 168L20 158M42 156L22 144M46 144L25 130
+          M50 132L28 116M54 120L31 102M58 108L35 88
+          M62 96L39 74M66 84L44 60M70 72L49 47
+          M74 60L54 34M78 48L59 22
+        "
+        stroke="#dcb679"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+        opacity="0.75"
+      />
+      <path
+        d="
+          M40 172L52 176M45 160L57 165M49 147L61 152
+          M53 135L64 140M57 122L68 128M61 110L71 116
+          M65 98L74 104M69 85L77 92M73 73L80 79
+        "
+        stroke="#3a2008"
+        strokeWidth="1"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
+
+      {/* NIB TIP */}
+      <path d="M30 214L34 202L38 214Z" fill="#241206" />
+    </g>
   </svg>
 );
 
@@ -441,7 +508,7 @@ const TransactionList = () => {
                         </div>
 
                         {/* RIGHT QUOTE */}
-                        <div className="absolute right-[5%] top-[12%] hidden lg:block w-32 text-center parchment-script italic text-[#4d2810] text-base leading-6 opacity-90 pointer-events-none">
+                        <div className="absolute right-[5%] top-[12%] hidden lg:block w-32 text-center parchment-script italic font-semibold text-[#2e1305] text-base leading-6 opacity-100 drop-shadow-[1px_1.5px_0px_rgba(255,240,210,0.5)] pointer-events-none">
                           “Small
                           <br />
                           Expenses
@@ -531,14 +598,14 @@ const TransactionList = () => {
                             </div>
 
                             {/* LEFT QUOTE */}
-                            <div className="absolute left-[18%] bottom-4 hidden md:block parchment-script italic text-[#4d2810] text-lg leading-7">
+                            <div className="absolute left-[18%] bottom-4 hidden md:block parchment-script italic font-semibold text-[#2e1305] text-lg leading-7 drop-shadow-[1px_1.5px_0px_rgba(255,240,210,0.5)]">
                               “Good Food
                               <br />
                               &nbsp;&nbsp;Brighter Days”
                             </div>
 
                             {/* RIGHT QUOTE */}
-                            <div className="absolute right-[16%] bottom-4 hidden md:block text-right parchment-script italic text-[#4d2810] text-lg leading-7">
+                            <div className="absolute right-[16%] bottom-4 hidden md:block text-right parchment-script italic font-semibold text-[#2e1305] text-lg leading-7 drop-shadow-[1px_1.5px_0px_rgba(255,240,210,0.5)]">
                               Spend Wisely
                               <br />
                               Live Better
