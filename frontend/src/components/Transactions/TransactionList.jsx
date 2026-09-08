@@ -983,7 +983,7 @@ const TransactionList = () => {
             {/* ==================================================
                 TITLE
             =================================================== */}
-            <h4
+            {/*<h4
               className="
                 mt-1
 
@@ -1001,6 +1001,10 @@ const TransactionList = () => {
                 drop-shadow-[1px_2px_1px_rgba(70,30,5,.25)]
               "
             >
+              Expense Items
+            </h4> */}
+            
+            <h4 className="parchment-title text-5xl md:text-7xl tracking-tight text-[#3a1705]">
               Expense Items
             </h4>
 
