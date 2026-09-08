@@ -361,79 +361,107 @@ const TransactionList = () => {
                 
                 {/* Parchment view */}
 
-                {/* ============================================================
+{/* ================================================================
     ANCIENT PARCHMENT — EXPANDED ITEM DETAILS
-============================================================ */}
+    FUNCTIONALITY PRESERVED
+================================================================ */}
+
 {selectedTransactionId === transaction._id &&
   transaction.type === "expense" &&
   transaction.items?.length > 0 && (
     <li className="list-none w-full">
 
+      {/* ============================================================
+          MAIN PARCHMENT
+      ============================================================ */}
+
       <div
         className="
           relative
           w-full
-          min-h-[760px]
+          min-h-[820px]
           overflow-hidden
           isolate
 
-          px-5
-          py-7
+          px-4
+          py-8
 
-          md:px-10
-          md:py-8
+          md:px-8
+          md:py-10
 
-          text-[#3b1d0b]
+          text-[#3a1705]
 
-          shadow-[0_14px_35px_rgba(45,22,5,0.48)]
+          shadow-[0_18px_45px_rgba(58,28,5,0.48)]
 
-          bg-[#d7a762]
+          bg-[#e8c07c]
 
+          /* IRREGULAR OUTER SHAPE */
           [clip-path:polygon(
-            1%_2%,4%_3%,7%_1%,10%_3%,13%_1%,17%_2%,21%_1%,
-            25%_3%,29%_1%,33%_2%,37%_1%,41%_3%,45%_1%,49%_2%,
-            53%_1%,57%_3%,61%_1%,65%_2%,69%_1%,73%_3%,77%_1%,
-            81%_2%,85%_1%,89%_3%,93%_1%,97%_3%,99%_5%,
-            98%_11%,99%_17%,97%_23%,99%_29%,98%_35%,99%_41%,
-            97%_47%,99%_53%,98%_59%,99%_65%,97%_71%,99%_77%,
-            98%_83%,99%_89%,97%_95%,99%_98%,
-            94%_97%,90%_99%,86%_97%,82%_99%,78%_97%,74%_99%,
-            70%_97%,66%_99%,62%_97%,58%_99%,54%_97%,50%_99%,
-            46%_97%,42%_99%,38%_97%,34%_99%,30%_97%,26%_99%,
-            22%_97%,18%_99%,14%_97%,10%_99%,6%_97%,2%_99%,
-            3%_94%,1%_88%,3%_82%,1%_76%,3%_70%,1%_64%,3%_58%,
-            1%_52%,3%_46%,1%_40%,3%_34%,1%_28%,3%_22%,1%_16%,3%_10%
+            1%_2%,4%_3%,7%_1%,11%_3%,15%_1%,19%_3%,23%_1%,
+            27%_3%,31%_1%,35%_3%,39%_1%,43%_2%,47%_1%,51%_3%,
+            55%_1%,59%_3%,63%_1%,67%_2%,71%_1%,75%_3%,79%_1%,
+            83%_3%,87%_1%,91%_3%,95%_1%,99%_4%,
+
+            98%_10%,99%_16%,97%_22%,99%_28%,98%_34%,99%_40%,
+            97%_46%,99%_52%,98%_58%,99%_64%,97%_70%,99%_76%,
+            98%_82%,99%_88%,97%_94%,99%_98%,
+
+            95%_97%,91%_99%,87%_97%,83%_99%,79%_97%,75%_99%,
+            71%_97%,67%_99%,63%_97%,59%_99%,55%_97%,51%_99%,
+            47%_97%,43%_99%,39%_97%,35%_99%,31%_97%,27%_99%,
+            23%_97%,19%_99%,15%_97%,11%_99%,7%_97%,3%_99%,
+
+            2%_94%,1%_88%,3%_82%,1%_76%,2%_70%,1%_64%,
+            3%_58%,1%_52%,2%_46%,1%_40%,3%_34%,1%_28%,
+            2%_22%,1%_16%,3%_10%
           )]
         "
       >
 
-        {/* ========================================================
-            PAPER BASE
-        ========================================================= */}
+        {/* ==========================================================
+            PARCHMENT BASE
+        ========================================================== */}
+
         <div
           className="
             absolute
             inset-0
-            -z-20
+            -z-30
             pointer-events-none
 
-            bg-[radial-gradient(ellipse_at_center,#f4dca7_0%,#edcf91_38%,#d5a764_72%,#a96d2d_100%)]
+            bg-[radial-gradient(
+              ellipse_at_center,
+              #f6dca4_0%,
+              #efcc8c_30%,
+              #e4b971_58%,
+              #c88c43_82%,
+              #754014_100%
+            )]
           "
         />
 
-        {/* ========================================================
-            REALISTIC PAPER TEXTURE
-        ========================================================= */}
+        {/* ==========================================================
+            OLD PAPER TEXTURE
+        ========================================================== */}
+
         <svg
-          className="absolute inset-0 w-full h-full -z-10 opacity-35 pointer-events-none"
+          className="
+            absolute
+            inset-0
+            w-full
+            h-full
+            -z-20
+            opacity-30
+            pointer-events-none
+          "
           preserveAspectRatio="none"
         >
-          <filter id={`paperTexture-${transaction._id}`}>
+          <filter id={`parchmentNoise-${transaction._id}`}>
             <feTurbulence
               type="fractalNoise"
-              baseFrequency="0.035"
-              numOctaves="4"
-              seed="8"
+              baseFrequency="0.018"
+              numOctaves="5"
+              seed="17"
             />
 
             <feColorMatrix
@@ -444,7 +472,7 @@ const TransactionList = () => {
             <feComponentTransfer>
               <feFuncA
                 type="table"
-                tableValues="0 0.45"
+                tableValues="0 0.42"
               />
             </feComponentTransfer>
           </filter>
@@ -452,13 +480,36 @@ const TransactionList = () => {
           <rect
             width="100%"
             height="100%"
-            filter={`url(#paperTexture-${transaction._id})`}
+            filter={`url(#parchmentNoise-${transaction._id})`}
           />
         </svg>
 
-        {/* ========================================================
-            BURNT EDGE VIGNETTE
-        ========================================================= */}
+        {/* ==========================================================
+            CENTER PAPER GLOW
+        ========================================================== */}
+
+        <div
+          className="
+            absolute
+            inset-[4%]
+            -z-10
+            pointer-events-none
+
+            bg-[radial-gradient(
+              ellipse_at_center,
+              rgba(255,232,175,0.58),
+              rgba(239,199,125,0.22)_55%,
+              transparent_82%
+            )]
+
+            blur-[1px]
+          "
+        />
+
+        {/* ==========================================================
+            DARK BURNT EDGES
+        ========================================================== */}
+
         <div
           className="
             absolute
@@ -466,29 +517,88 @@ const TransactionList = () => {
             -z-10
             pointer-events-none
 
-            bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(77,36,6,.18)_76%,rgba(60,27,4,.58)_100%)]
+            bg-[radial-gradient(
+              ellipse_at_center,
+              transparent_53%,
+              rgba(117,61,15,0.08)_66%,
+              rgba(91,43,7,0.28)_82%,
+              rgba(53,22,3,0.72)_100%
+            )]
           "
         />
 
-        {/* ========================================================
-            OLD INK / WATER STAINS
-        ========================================================= */}
+        {/* ==========================================================
+            EXTRA EDGE BURN
+        ========================================================== */}
+
+        <div
+          className="
+            absolute
+            inset-0
+            -z-10
+            pointer-events-none
+
+            shadow-[inset_0_0_35px_rgba(71,31,4,0.7)]
+          "
+        />
+
+        {/* ==========================================================
+            AGED STAINS
+        ========================================================== */}
+
         <div
           className="
             absolute
             left-[4%]
-            top-[42%]
+            top-[38%]
+
+            w-32
+            h-24
+
+            rounded-full
+
+            bg-[#704018]/20
+            blur-xl
+
+            rotate-[-20deg]
+
+            pointer-events-none
+          "
+        />
+
+        <div
+          className="
+            absolute
+            right-[5%]
+            top-[43%]
 
             w-28
+            h-36
+
+            rounded-full
+
+            bg-[#704018]/16
+            blur-xl
+
+            rotate-[15deg]
+
+            pointer-events-none
+          "
+        />
+
+        <div
+          className="
+            absolute
+            left-[14%]
+            bottom-[12%]
+
+            w-24
             h-20
 
             rounded-full
 
-            bg-[#734014]/20
-
+            bg-[#74451d]/15
             blur-xl
-
-            rotate-[-18deg]
 
             pointer-events-none
           "
@@ -497,76 +607,66 @@ const TransactionList = () => {
         <div
           className="
             absolute
-            right-[6%]
-            top-[48%]
-
-            w-24
-            h-32
-
-            rounded-full
-
-            bg-[#6c3a12]/15
-
-            blur-xl
-
-            rotate-[20deg]
-
-            pointer-events-none
-          "
-        />
-
-        <div
-          className="
-            absolute
-            left-[16%]
-            bottom-[7%]
+            right-[22%]
+            bottom-[18%]
 
             w-20
             h-20
 
             rounded-full
 
-            bg-[#754319]/15
-
+            bg-[#704018]/10
             blur-lg
 
             pointer-events-none
           "
         />
 
-        {/* ========================================================
-            INNER AGED BORDER
-        ========================================================= */}
+        {/* ==========================================================
+            INNER BORDER
+        ========================================================== */}
+
         <div
           className="
             absolute
-            inset-[22px]
+            inset-[24px]
 
             border
-            border-[#67350e]/35
+            border-[#69350e]/30
 
             pointer-events-none
-
-            opacity-70
           "
         />
 
-        {/* ========================================================
-            TOP LEFT ORNAMENT — MORE DETAILED
-        ========================================================= */}
+        <div
+          className="
+            absolute
+            inset-[30px]
+
+            border
+            border-[#69350e]/10
+
+            pointer-events-none
+          "
+        />
+
+        {/* ==========================================================
+            TOP LEFT ORNAMENT
+        ========================================================== */}
+
         <svg
           className="
             absolute
-            top-5
-            left-5
+            top-2
+            left-3
 
-            w-32
-            h-32
+            w-36
+            h-36
 
-            md:w-40
-            md:h-40
+            md:w-44
+            md:h-44
 
-            text-[#542609]
+            text-[#57290a]
 
             opacity-90
 
@@ -575,35 +675,44 @@ const TransactionList = () => {
           viewBox="0 0 180 180"
           fill="none"
         >
+
           <path
-            d="M15 155
-               C15 100 18 38 76 25
-               C108 18 133 26 158 10"
+            d="
+              M14 160
+              C14 105 18 44 72 28
+              C105 18 134 28 160 8
+            "
             stroke="currentColor"
             strokeWidth="3"
           />
 
           <path
-            d="M20 137
-               C48 125 55 103 38 82
-               C65 91 91 77 87 50
-               C110 64 134 50 136 28"
+            d="
+              M20 137
+              C48 125 57 103 39 82
+              C66 91 92 76 87 49
+              C109 64 136 50 137 25
+            "
             stroke="currentColor"
             strokeWidth="2.5"
           />
 
           <path
-            d="M36 119
-               C59 112 69 98 61 83
-               C78 88 94 77 94 63"
+            d="
+              M38 120
+              C58 111 69 97 61 83
+              C77 87 95 76 95 61
+            "
             stroke="currentColor"
             strokeWidth="2"
           />
 
           <path
-            d="M24 62
-               C40 47 57 43 76 47
-               C61 32 61 22 66 15"
+            d="
+              M25 62
+              C41 47 58 43 76 47
+              C62 32 61 22 66 14
+            "
             stroke="currentColor"
             strokeWidth="2"
           />
@@ -616,42 +725,50 @@ const TransactionList = () => {
           />
 
           <circle
-            cx="73"
+            cx="74"
             cy="47"
             r="4"
             fill="currentColor"
           />
 
           <circle
-            cx="91"
+            cx="92"
             cy="78"
             r="4"
             fill="currentColor"
           />
 
+          <circle
+            cx="48"
+            cy="96"
+            r="3"
+            fill="currentColor"
+          />
+
           <path
-            d="M14 154L14 104"
+            d="M14 160V106"
             stroke="currentColor"
             strokeWidth="4"
           />
         </svg>
 
-        {/* ========================================================
+        {/* ==========================================================
             TOP RIGHT ORNAMENT
-        ========================================================= */}
+        ========================================================== */}
+
         <svg
           className="
             absolute
-            top-5
-            right-5
+            top-2
+            right-3
 
-            w-32
-            h-32
+            w-36
+            h-36
 
-            md:w-40
-            md:h-40
+            md:w-44
+            md:h-44
 
-            text-[#542609]
+            text-[#57290a]
 
             opacity-90
 
@@ -662,35 +779,34 @@ const TransactionList = () => {
           viewBox="0 0 180 180"
           fill="none"
         >
+
           <path
-            d="M15 155
-               C15 100 18 38 76 25
-               C108 18 133 26 158 10"
+            d="
+              M14 160
+              C14 105 18 44 72 28
+              C105 18 134 28 160 8
+            "
             stroke="currentColor"
             strokeWidth="3"
           />
 
           <path
-            d="M20 137
-               C48 125 55 103 38 82
-               C65 91 91 77 87 50
-               C110 64 134 50 136 28"
+            d="
+              M20 137
+              C48 125 57 103 39 82
+              C66 91 92 76 87 49
+              C109 64 136 50 137 25
+            "
             stroke="currentColor"
             strokeWidth="2.5"
           />
 
           <path
-            d="M36 119
-               C59 112 69 98 61 83
-               C78 88 94 77 94 63"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-
-          <path
-            d="M24 62
-               C40 47 57 43 76 47
-               C61 32 61 22 66 15"
+            d="
+              M38 120
+              C58 111 69 97 61 83
+              C77 87 95 76 95 61
+            "
             stroke="currentColor"
             strokeWidth="2"
           />
@@ -701,24 +817,32 @@ const TransactionList = () => {
             r="6"
             fill="currentColor"
           />
+
+          <circle
+            cx="74"
+            cy="47"
+            r="4"
+            fill="currentColor"
+          />
         </svg>
 
-        {/* ========================================================
+        {/* ==========================================================
             BOTTOM RIGHT ORNAMENT
-        ========================================================= */}
+        ========================================================== */}
+
         <svg
           className="
             absolute
-            bottom-3
-            right-5
+            bottom-1
+            right-3
 
-            w-36
-            h-36
+            w-40
+            h-40
 
-            md:w-44
-            md:h-44
+            md:w-48
+            md:h-48
 
-            text-[#542609]
+            text-[#57290a]
 
             opacity-90
 
@@ -730,39 +854,46 @@ const TransactionList = () => {
           viewBox="0 0 180 180"
           fill="none"
         >
+
           <path
-            d="M15 155
-               C15 100 18 38 76 25
-               C108 18 133 26 158 10"
+            d="
+              M14 160
+              C14 105 18 44 72 28
+              C105 18 134 28 160 8
+            "
             stroke="currentColor"
             strokeWidth="3"
           />
 
           <path
-            d="M20 137
-               C48 125 55 103 38 82
-               C65 91 91 77 87 50
-               C110 64 134 50 136 28"
+            d="
+              M20 137
+              C48 125 57 103 39 82
+              C66 91 92 76 87 49
+              C109 64 136 50 137 25
+            "
             stroke="currentColor"
             strokeWidth="2.5"
           />
 
           <path
-            d="M36 119
-               C59 112 69 98 61 83
-               C78 88 94 77 94 63"
+            d="
+              M38 120
+              C58 111 69 97 61 83
+              C77 87 95 76 95 61
+            "
             stroke="currentColor"
             strokeWidth="2"
           />
         </svg>
 
-        {/* ========================================================
+        {/* ==========================================================
             COMPASS
-        ========================================================= */}
+        ========================================================== */}
+
         <div
           className="
             absolute
-
             left-[7%]
             top-[15%]
 
@@ -777,10 +908,12 @@ const TransactionList = () => {
             pointer-events-none
           "
         >
+
           <svg
             viewBox="0 0 160 160"
             className="w-full h-full"
           >
+
             <circle
               cx="80"
               cy="80"
@@ -814,25 +947,21 @@ const TransactionList = () => {
               strokeWidth="1"
             />
 
-            {/* North */}
             <path
               d="M80 20L91 72L80 80L69 72Z"
               fill="#70451f"
             />
 
-            {/* South */}
             <path
               d="M80 140L69 88L80 80L91 88Z"
               fill="#b08043"
             />
 
-            {/* East */}
             <path
               d="M140 80L88 69L80 80L88 91Z"
               fill="#70451f"
             />
 
-            {/* West */}
             <path
               d="M20 80L72 91L80 80L72 69Z"
               fill="#b08043"
@@ -888,17 +1017,20 @@ const TransactionList = () => {
             >
               W
             </text>
+
           </svg>
         </div>
 
-        {/* ========================================================
-            RIGHT SIDE QUOTE
-        ========================================================= */}
+        {/* ==========================================================
+            RIGHT QUOTE
+        ========================================================== */}
+
         <div
           className="
             absolute
+
             right-[5%]
-            top-[14%]
+            top-[12%]
 
             hidden
             lg:block
@@ -910,15 +1042,17 @@ const TransactionList = () => {
             font-serif
             italic
 
-            text-[#4d2a12]
-
-            opacity-85
+            text-[#4d2810]
 
             text-base
+            md:text-lg
 
             leading-7
+
+            opacity-90
           "
         >
+
           <p>
             “Small
             <br />
@@ -930,60 +1064,99 @@ const TransactionList = () => {
             <br />
             Tomorrow”
           </p>
+
         </div>
 
-        {/* ========================================================
+        {/* ==========================================================
             MAIN CONTENT
-        ========================================================= */}
-        <div className="relative z-30">
+        ========================================================== */}
 
-          {/* ======================================================
-              HEADER
-          ====================================================== */}
+        <div className="relative z-20">
+
+          {/* ========================================================
+              TOP DECORATIVE LINE
+          ======================================================== */}
+
+          <div
+            className="
+              flex
+              items-center
+              justify-center
+              gap-5
+
+              mb-1
+            "
+          >
+
+            <div
+              className="
+                h-[2px]
+                w-20
+                md:w-32
+                bg-[#57290b]/70
+              "
+            />
+
+            <svg
+              width="58"
+              height="30"
+              viewBox="0 0 58 30"
+              className="text-[#57290b]"
+            >
+
+              <path
+                d="
+                  M2 15H19
+                  C24 15 26 5 29 5
+                  C32 5 34 25 29 25
+                  C26 25 24 15 19 15
+                  H2
+                "
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+
+              <path
+                d="
+                  M56 15H39
+                  C34 15 32 5 29 5
+                  C26 5 24 25 29 25
+                  C32 25 34 15 39 15
+                  H56
+                "
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+              />
+
+              <circle
+                cx="29"
+                cy="15"
+                r="3"
+                fill="currentColor"
+              />
+
+            </svg>
+
+            <div
+              className="
+                h-[2px]
+                w-20
+                md:w-32
+                bg-[#57290b]/70
+              "
+            />
+
+          </div>
+
+          {/* ========================================================
+              TITLE
+          ======================================================== */}
+
           <div className="text-center">
 
-            {/* Decorative line */}
-            <div className="flex items-center justify-center gap-5">
-
-              <div className="h-[2px] w-16 md:w-28 bg-[#512508]/75" />
-
-              <svg
-                width="55"
-                height="28"
-                viewBox="0 0 55 28"
-                className="text-[#512508]"
-              >
-                <path
-                  d="M2 14H18
-                     C24 14 25 4 29 4
-                     C33 4 33 24 29 24
-                     C25 24 24 14 18 14
-                     H2"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  fill="none"
-                />
-
-                <path
-                  d="M53 14H37
-                     C31 14 30 4 26 4
-                     C22 4 22 24 26 24
-                     C30 24 31 14 37 14
-                     H53"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  fill="none"
-                />
-              </svg>
-
-              <div className="h-[2px] w-16 md:w-28 bg-[#512508]/75" />
-
-            </div>
-
-            {/* ==================================================
-                TITLE
-            =================================================== */}
-            {/*<h4
+            <h4
               className="
                 mt-1
 
@@ -1001,10 +1174,6 @@ const TransactionList = () => {
                 drop-shadow-[1px_2px_1px_rgba(70,30,5,.25)]
               "
             >
-              Expense Items
-            </h4> */}
-            
-            <h4 className="parchment-title text-5xl md:text-7xl tracking-tight text-[#3a1705]">
               Expense Items
             </h4>
 
@@ -1024,12 +1193,30 @@ const TransactionList = () => {
               A record of purchased items
             </p>
 
-            {/* ==================================================
-                HEADER ORNAMENT
-            =================================================== */}
-            <div className="flex justify-center items-center gap-4 mt-3">
+            {/* ======================================================
+                TITLE ORNAMENT
+            ====================================================== */}
 
-              <div className="h-[2px] w-24 bg-[#62300d]/60" />
+            <div
+              className="
+                flex
+                items-center
+                justify-center
+                gap-4
+
+                mt-3
+              "
+            >
+
+              <div
+                className="
+                  h-[2px]
+                  w-20
+                  md:w-28
+
+                  bg-[#62300d]/60
+                "
+              />
 
               <svg
                 width="45"
@@ -1037,12 +1224,15 @@ const TransactionList = () => {
                 viewBox="0 0 45 28"
                 className="text-[#62300d]"
               >
+
                 <path
-                  d="M22 2
-                     C22 2 16 11 8 14
-                     C16 17 22 26 22 26
-                     C22 26 29 17 37 14
-                     C29 11 22 2 22 2Z"
+                  d="
+                    M22 2
+                    C22 2 16 11 8 14
+                    C16 17 22 26 22 26
+                    C22 26 29 17 37 14
+                    C29 11 22 2 22 2Z
+                  "
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -1054,22 +1244,34 @@ const TransactionList = () => {
                   r="3"
                   fill="currentColor"
                 />
+
               </svg>
 
-              <div className="h-[2px] w-24 bg-[#62300d]/60" />
+              <div
+                className="
+                  h-[2px]
+                  w-20
+                  md:w-28
+
+                  bg-[#62300d]/60
+                "
+              />
 
             </div>
 
-            {/* ==================================================
+            {/* ======================================================
                 CATEGORY
-            =================================================== */}
+            ====================================================== */}
+
             <div className="mt-2">
 
               <span
                 className="
                   text-xs
+
                   uppercase
-                  tracking-[0.35em]
+
+                  tracking-[0.38em]
 
                   font-serif
                   font-bold
@@ -1084,16 +1286,17 @@ const TransactionList = () => {
 
           </div>
 
-          {/* ======================================================
+          {/* ========================================================
               INNER LEDGER
-          ====================================================== */}
+          ======================================================== */}
+
           <div
             className="
               relative
 
               mx-auto
 
-              mt-5
+              mt-6
 
               w-[92%]
               md:w-[76%]
@@ -1104,43 +1307,51 @@ const TransactionList = () => {
               pt-2
               pb-1
 
-              bg-[#e4bd79]
+              bg-[#e7bd76]
 
               border
               border-[#65320c]
 
-              shadow-[0_5px_10px_rgba(62,28,5,.3),inset_0_0_25px_rgba(75,32,5,.22)]
+              shadow-[0_7px_14px_rgba(62,28,5,.34),inset_0_0_25px_rgba(75,32,5,.22)]
 
               [clip-path:polygon(
                 1%_3%,7%_1%,14%_3%,21%_1%,28%_3%,35%_1%,42%_3%,
                 49%_1%,56%_3%,63%_1%,70%_3%,77%_1%,84%_3%,92%_1%,99%_3%,
+
                 98%_16%,99%_31%,98%_46%,99%_61%,98%_76%,99%_98%,
+
                 91%_96%,84%_99%,77%_97%,70%_99%,63%_97%,56%_99%,
                 49%_97%,42%_99%,35%_97%,28%_99%,21%_97%,14%_99%,
-                7%_97%,1%_99%,2%_83%,1%_68%,2%_53%,1%_38%,2%_23%,1%_8%
+                7%_97%,1%_99%,
+
+                2%_83%,1%_68%,2%_53%,1%_38%,2%_23%,1%_8%
               )]
             "
           >
 
-            {/* Ledger texture */}
+            {/* LEDGER TEXTURE */}
+
             <div
               className="
                 absolute
                 inset-0
+
                 pointer-events-none
 
                 opacity-25
 
-                bg-[radial-gradient(circle_at_20%_30%,#70451f_0_1px,transparent_3px),radial-gradient(circle_at_70%_70%,#70451f_0_1px,transparent_4px)]
+                bg-[radial-gradient(circle_at_18%_28%,#70451f_0_1px,transparent_3px),radial-gradient(circle_at_74%_62%,#70451f_0_1px,transparent_4px),radial-gradient(circle_at_48%_82%,#70451f_0_1px,transparent_3px)]
               "
             />
 
-            {/* ==================================================
+            {/* ======================================================
                 TABLE
-            =================================================== */}
+            ====================================================== */}
+
             <table
               className="
                 relative
+
                 w-full
 
                 font-serif
@@ -1211,6 +1422,7 @@ const TransactionList = () => {
               <tbody>
 
                 {transaction.items.map((item, index) => (
+
                   <tr
                     key={item._id || index}
                     className="
@@ -1256,11 +1468,13 @@ const TransactionList = () => {
                     </td>
 
                   </tr>
+
                 ))}
 
-                {/* =================================================
+                {/* ==================================================
                     TOTAL
                 ================================================== */}
+
                 <tr>
 
                   <td
@@ -1321,25 +1535,28 @@ const TransactionList = () => {
 
           </div>
 
-          {/* ======================================================
+          {/* ========================================================
               WAX SEAL
-          ====================================================== */}
+          ======================================================== */}
+
           <div
             className="
               absolute
 
               left-[3%]
-              bottom-[5%]
+              bottom-[6%]
 
               w-28
               h-28
 
-              md:w-36
-              md:h-36
+              md:w-40
+              md:h-40
 
               pointer-events-none
 
               rotate-[-8deg]
+
+              z-40
             "
           >
 
@@ -1353,27 +1570,28 @@ const TransactionList = () => {
                 <radialGradient
                   id={`waxSeal-${transaction._id}`}
                   cx="35%"
-                  cy="30%"
+                  cy="28%"
                 >
+
                   <stop
                     offset="0%"
-                    stopColor="#c85b49"
+                    stopColor="#c95a46"
                   />
 
                   <stop
-                    offset="45%"
-                    stopColor="#8f2c20"
+                    offset="42%"
+                    stopColor="#8e2d20"
                   />
 
                   <stop
                     offset="100%"
-                    stopColor="#4e100b"
+                    stopColor="#4b100b"
                   />
+
                 </radialGradient>
 
               </defs>
 
-              {/* Wax seal shape */}
               <path
                 d="
                   M75 8
@@ -1394,11 +1612,10 @@ const TransactionList = () => {
                 strokeWidth="3"
               />
 
-              {/* Inner ring */}
               <circle
                 cx="75"
                 cy="68"
-                r="38"
+                r="39"
                 fill="none"
                 stroke="#4b100b"
                 strokeWidth="3"
@@ -1413,26 +1630,16 @@ const TransactionList = () => {
                 strokeWidth="1.5"
               />
 
-              {/* Tree emblem */}
+              {/* TREE */}
+
               <path
                 d="
-                  M75 43
-                  V94
-
-                  M75 57
-                  L58 46
-
-                  M75 61
-                  L92 48
-
-                  M75 70
-                  L56 60
-
-                  M75 73
-                  L95 60
-
-                  M64 95
-                  H86
+                  M75 43V94
+                  M75 57L58 46
+                  M75 61L92 48
+                  M75 70L56 60
+                  M75 73L95 60
+                  M64 95H86
                 "
                 stroke="#45100c"
                 strokeWidth="4"
@@ -1471,25 +1678,28 @@ const TransactionList = () => {
 
           </div>
 
-          {/* ======================================================
-              QUILL / FEATHER
-          ====================================================== */}
+          {/* ========================================================
+              QUILL
+          ======================================================== */}
+
           <div
             className="
               absolute
 
-              right-[3%]
+              right-[2%]
               bottom-[5%]
 
-              w-28
-              h-48
+              w-32
+              h-52
 
-              md:w-36
-              md:h-56
+              md:w-40
+              md:h-64
 
               rotate-[8deg]
 
               pointer-events-none
+
+              z-40
             "
           >
 
@@ -1499,7 +1709,8 @@ const TransactionList = () => {
               fill="none"
             >
 
-              {/* Shaft */}
+              {/* SHAFT */}
+
               <path
                 d="M30 211C44 161 63 103 95 16"
                 stroke="#3d1d08"
@@ -1507,7 +1718,8 @@ const TransactionList = () => {
                 strokeLinecap="round"
               />
 
-              {/* Feather */}
+              {/* FEATHER */}
+
               <path
                 d="
                   M32 174
@@ -1522,14 +1734,16 @@ const TransactionList = () => {
                 strokeWidth="2"
               />
 
-              {/* Feather central vein */}
+              {/* CENTRAL VEIN */}
+
               <path
                 d="M30 174C50 125 72 77 100 11"
                 stroke="#d1a05e"
                 strokeWidth="2"
               />
 
-              {/* Feather details */}
+              {/* FEATHER DETAILS */}
+
               <path
                 d="
                   M42 145L17 126
@@ -1549,9 +1763,10 @@ const TransactionList = () => {
 
           </div>
 
-          {/* ======================================================
+          {/* ========================================================
               BOTTOM LEFT QUOTE
-          ====================================================== */}
+          ======================================================== */}
+
           <div
             className="
               absolute
@@ -1571,18 +1786,23 @@ const TransactionList = () => {
               md:text-lg
 
               leading-7
+
+              z-30
             "
           >
+
             <p>
               “Good Food
               <br />
               &nbsp;&nbsp;Brighter Days”
             </p>
+
           </div>
 
-          {/* ======================================================
+          {/* ========================================================
               BOTTOM RIGHT QUOTE
-          ====================================================== */}
+          ======================================================== */}
+
           <div
             className="
               absolute
@@ -1604,36 +1824,52 @@ const TransactionList = () => {
               md:text-lg
 
               leading-7
+
+              z-30
             "
           >
+
             <p>
               Spend Wisely
               <br />
               Live Better
             </p>
+
           </div>
 
-          {/* ======================================================
+          {/* ========================================================
               BOTTOM ORNAMENT
-          ====================================================== */}
+          ======================================================== */}
+
           <div
             className="
               flex
               items-center
               justify-center
               gap-4
-              mt-5
+
+              mt-6
+
               text-[#57290b]
             "
           >
 
-            <div className="h-[2px] w-20 md:w-32 bg-[#63300d]/60" />
+            <div
+              className="
+                h-[2px]
+                w-20
+                md:w-32
+
+                bg-[#63300d]/60
+              "
+            />
 
             <svg
               width="55"
               height="25"
               viewBox="0 0 55 25"
             >
+
               <path
                 d="
                   M2 12.5
@@ -1642,7 +1878,6 @@ const TransactionList = () => {
                   C32 5 33 20 28 20
                   C24 20 22 12.5 18 12.5
                   H2
-
                   M53 12.5
                   H37
                   C33 12.5 31 5 27 5
@@ -1661,7 +1896,14 @@ const TransactionList = () => {
                 fill="currentColor"
               />
             </svg>
-            <div className="h-[2px] w-20 md:w-32 bg-[#63300d]/60" />
+            <div
+              className="
+                h-[2px]
+                w-20
+                md:w-32
+                bg-[#63300d]/60
+              "
+            />
           </div>
         </div>
       </div>
