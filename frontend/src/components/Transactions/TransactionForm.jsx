@@ -531,7 +531,7 @@ const TransactionForm = () => {
                 {/* ITEM TOTAL */}
                 <div className="flex justify-end border-t pt-3">
                   <span className="font-semibold text-gray-800">
-                    Total: ${itemTotal.toLocaleString()}
+                    Total: ₹{itemTotal.toLocaleString()}
                   </span>
                 </div>
 
