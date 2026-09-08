@@ -14,6 +14,7 @@ import {
   FaWallet,
   FaPlus,
   FaTrash,
+  FaRupeeSign,
 } from "react-icons/fa";
 
 import { listCategoriesAPI } from "../../services/category/categoryService";
@@ -362,7 +363,7 @@ const TransactionForm = () => {
             htmlFor="amount"
             className="text-gray-700 font-medium"
           >
-            <FaDollarSign className="inline mr-2 text-blue-500" />
+           <FaRupeeSign className="inline mr-2 text-blue-500" />
             Amount
           </label>
 
