@@ -17,7 +17,14 @@ const sendEmail = async ({to, subject, htmlContent}) => {
 
     await apiInstance.sendTransacEmail(sendSmtpEmail);
   } catch (err) {
-    console.error("Email sending failed:", err);
+     console.error("========== BREVO EMAIL ERROR ==========");
+     console.error("Status:", err?.response?.status);
+     console.error("Body:", err?.response?.body);
+     console.error("Message:", err?.message);
+     console.error("Full error:", err);
+     console.error("=======================================");
+
+    //console.error("Email sending failed:", err);
     throw new Error("Email could not be sent. Please try again later.");
   }
 };

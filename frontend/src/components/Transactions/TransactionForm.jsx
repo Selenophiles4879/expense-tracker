@@ -8,7 +8,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
-  FaDollarSign,
   FaCalendarAlt,
   FaRegCommentDots,
   FaWallet,
@@ -210,8 +209,24 @@ const TransactionForm = () => {
     },
   });
 
-  //! Hide/clear items when transaction type changes
+  //! Clear category and items when transaction type changes
   useEffect(() => {
+    if (!formik.values.type) {
+      return;
+    }
+
+    // Clear category when the user changes transaction type.
+    // Do not clear the category on the initial edit load.
+    if (
+      isEditMode &&
+      transaction?.type !== formik.values.type
+    ) {
+      if (formik.values.category) {
+        formik.setFieldValue("category", "", false);
+      }
+    }
+
+    // Clear expense items when switching away from expense.
     if (formik.values.type !== "expense") {
       if (formik.values.items.length > 0) {
         formik.setFieldValue("items", [], false);
@@ -219,7 +234,11 @@ const TransactionForm = () => {
 
       setShowItems(false);
     }
-  }, [formik.values.type]);
+  }, [
+    formik.values.type,
+    isEditMode,
+    transaction,
+  ]);
 
   //! Hide/clear items when category is removed
   useEffect(() => {
@@ -234,6 +253,13 @@ const TransactionForm = () => {
       setShowItems(false);
     }
   }, [formik.values.category, formik.values.type]);
+
+  //! Filter categories according to transaction type
+  const filteredCategories =
+    categoriesData?.filter(
+      (category) =>
+        category?.type === formik.values.type
+    ) || [];
 
   const isPending =
     addMutation.isPending || updateMutation.isPending;
@@ -356,6 +382,51 @@ const TransactionForm = () => {
         )}
       </div>
 
+      {/* CATEGORY - FOR BOTH INCOME AND EXPENSE */}
+      <div className="flex flex-col space-y-1">
+        <label
+          htmlFor="category"
+          className="text-gray-700 font-medium"
+        >
+          <FaRegCommentDots className="inline mr-2 text-blue-500" />
+          Category
+        </label>
+
+        <select
+          {...formik.getFieldProps("category")}
+          id="category"
+          className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+        >
+          <option value="">
+            {formik.values.type
+              ? "Select a category"
+              : "Select transaction type first"}
+          </option>
+
+          {categoryLoading && (
+            <option disabled>
+              Loading categories...
+            </option>
+          )}
+
+          {filteredCategories.map((category) => (
+            <option
+              key={category?._id}
+              value={category?.name}
+            >
+              {category?.name}
+            </option>
+          ))}
+        </select>
+
+        {formik.touched.category &&
+          formik.errors.category && (
+            <p className="text-red-500 text-xs">
+              {formik.errors.category}
+            </p>
+          )}
+      </div>
+
       {/* AMOUNT - ONLY FOR INCOME */}
       {formik.values.type === "income" && (
         <div className="flex flex-col space-y-1">
@@ -363,7 +434,7 @@ const TransactionForm = () => {
             htmlFor="amount"
             className="text-gray-700 font-medium"
           >
-           <FaRupeeSign className="inline mr-2 text-blue-500" />
+            <FaRupeeSign className="inline mr-2 text-blue-500" />
             Amount
           </label>
 
@@ -382,44 +453,6 @@ const TransactionForm = () => {
           )}
         </div>
       )}
-
-      {/* CATEGORY */}
-      <div className="flex flex-col space-y-1">
-        <label
-          htmlFor="category"
-          className="text-gray-700 font-medium"
-        >
-          <FaRegCommentDots className="inline mr-2 text-blue-500" />
-          Category
-        </label>
-
-        <select
-          {...formik.getFieldProps("category")}
-          id="category"
-          className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-        >
-          <option value="">Select a category</option>
-
-          {categoryLoading && (
-            <option disabled>Loading categories...</option>
-          )}
-
-          {categoriesData?.map((category) => (
-            <option
-              key={category?._id}
-              value={category?.name}
-            >
-              {category?.name}
-            </option>
-          ))}
-        </select>
-
-        {formik.touched.category && formik.errors.category && (
-          <p className="text-red-500 text-xs">
-            {formik.errors.category}
-          </p>
-        )}
-      </div>
 
       {/* ADD ITEM - ONLY FOR EXPENSE AFTER CATEGORY */}
       {formik.values.type === "expense" &&

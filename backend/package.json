@@ -12,6 +12,12 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@getbrevo/brevo": "^3.0.1",
+    "@signpdf/placeholder-pdfkit": "^3.3.0",
+    "@signpdf/placeholder-plain": "^3.3.0",
+    "@signpdf/signer-p12": "^3.3.0",
+    "@signpdf/signpdf": "^3.3.0",
+    "@signpdf/utils": "^3.3.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
@@ -22,6 +28,9 @@
     "js-base64": "^3.7.8",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.4",
-    "@getbrevo/brevo": "^3.0.1"
+    "multer": "^2.3.0",
+    "node-forge": "^1.4.0",
+    "pdfkit": "^0.14.0",
+    "qrcode": "^1.5.4"
   }
 }

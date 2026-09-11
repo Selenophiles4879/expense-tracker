@@ -101,3 +101,27 @@ export const listTransactionsAPI = async ({
 
   return response.data;
 };
+
+
+//! DOWNLOAD EXPENSE REPORT
+export const downloadExpensesAPI = async ({ startDate, endDate, format = "pdf" }) => {
+  const response = await axios.get(
+    `${BASE_URL}/transactions/export/${format}`,
+    {
+      params: { startDate, endDate },
+      responseType: "blob",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+
+  const contentDisposition = response.headers["content-disposition"] || "";
+  const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+  const filename = filenameMatch?.[1] || `expense-report.${format}`;
+
+  return {
+    blob: response.data,
+    filename,
+  };
+};
