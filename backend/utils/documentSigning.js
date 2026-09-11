@@ -58,6 +58,9 @@ const pdfP12Path = path.resolve(
     "./config/pdf-signing/pdf-signing.p12"
 );
 
+const pdfP12Base64 =
+  process.env.PDF_SIGNING_P12_BASE64 || null;
+
 const pdfCertificatePath = path.resolve(
   __dirname,
   "..",
@@ -313,6 +316,7 @@ const getPdfCertificate = () => {
 
 const getPdfSigningConfig = () => {
   if (
+    !pdfP12Base64 &&
     !fs.existsSync(
       pdfP12Path
     )
@@ -448,13 +452,15 @@ const signPdfBuffer = async (
     );
   }
 
-  const config =
+    const config =
     getPdfSigningConfig();
 
   const p12Buffer =
-    fs.readFileSync(
-      config.p12Path
-    );
+    pdfP12Base64
+      ? Buffer.from(pdfP12Base64, "base64")
+      : fs.readFileSync(
+          config.p12Path
+        );
 
 //temporary
   console.log("P12 path:", config.p12Path);
@@ -470,6 +476,14 @@ console.log(
   ) {
     throw new Error(
       "PDF signing P12 file is empty."
+    );
+  }
+
+  if (
+    p12Buffer[0] !== 0x30
+  ) {
+    throw new Error(
+      `Decoded P12 does not start with a valid ASN.1 SEQUENCE (0x30). Got 0x${p12Buffer[0].toString(16)}. Check PDF_SIGNING_P12_BASE64 encoding.`
     );
   }
 
