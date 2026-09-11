@@ -15,6 +15,7 @@ const {
   signPdfBuffer,
   verifyPdfSignature,
   extractPdfSignature,
+  diagnoseEd25519Keys,
 } = require("../utils/documentSigning");
 
 
@@ -418,6 +419,8 @@ const createVerificationRecord = async ({
       transactions,
     });
 
+diagnoseEd25519Keys();   // <-- add this line
+  
   const documentHash =
     createDocumentHash(
       canonicalData
