@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+dist/
+build/
+mongoData/
+*.zip
+backend/config/pdf-signing/*.pem
+backend/config/pdf-signing/*.p12
+backend/config/signing/*.pem
