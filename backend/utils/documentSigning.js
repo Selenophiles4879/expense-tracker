@@ -456,6 +456,14 @@ const signPdfBuffer = async (
       config.p12Path
     );
 
+//temporary
+  console.log("P12 path:", config.p12Path);
+console.log("P12 size:", p12Buffer.length);
+console.log(
+  "P12 first 16 bytes:",
+  p12Buffer.subarray(0, 16).toString("hex")
+);
+  
   if (
     !p12Buffer ||
     p12Buffer.length === 0
