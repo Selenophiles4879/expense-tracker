@@ -27,21 +27,25 @@ const {
 
 const KEY_ID = "expense-tracker-ed25519-v1";
 
-const privateKeyPath = path.join(
-  __dirname,
-  "..",
-  "config",
-  "signing",
-  "private_key.pem"
-);
+const privateKeyPath =
+  process.env.ED25519_PRIVATE_KEY_PATH ||
+  path.join(
+    __dirname,
+    "..",
+    "config",
+    "signing",
+    "private_key.pem"
+  );
 
-const publicKeyPath = path.join(
-  __dirname,
-  "..",
-  "config",
-  "signing",
-  "public_key.pem"
-);
+const publicKeyPath =
+  process.env.ED25519_PUBLIC_KEY_PATH ||
+  path.join(
+    __dirname,
+    "..",
+    "config",
+    "signing",
+    "public_key.pem"
+  );
 
 // =========================================================
 // PDF SIGNING CONFIGURATION
