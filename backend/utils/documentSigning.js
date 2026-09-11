@@ -27,6 +27,40 @@ const {
 
 const KEY_ID = "expense-tracker-ed25519-v1";
 
+// =========================================================
+// DIAGNOSTIC: SELF-TEST ED25519 KEY PAIR
+// =========================================================
+
+const diagnoseEd25519Keys = () => {
+  try {
+    const privatePem = fs.readFileSync(privateKeyPath, "utf8");
+    const publicPem = fs.readFileSync(publicKeyPath, "utf8");
+
+    console.log("=== ED25519 KEY DIAGNOSTIC ===");
+    console.log("Private key path:", privateKeyPath);
+    console.log("Public key path:", publicKeyPath);
+    console.log("Private key SHA-256:", crypto.createHash("sha256").update(privatePem).digest("hex"));
+    console.log("Public key SHA-256:", crypto.createHash("sha256").update(publicPem).digest("hex"));
+    console.log("Private key length:", privatePem.length);
+    console.log("Public key length:", publicPem.length);
+
+    const privateKey = getPrivateKey();
+    const publicKey = getPublicKey();
+
+    const testMessage = Buffer.from("diagnostic-test-message");
+    const signature = crypto.sign(null, testMessage, privateKey);
+    const isValid = crypto.verify(null, testMessage, publicKey, signature);
+
+    console.log("Self-test sign+verify result:", isValid ? "MATCH" : "MISMATCH");
+    console.log("=== END DIAGNOSTIC ===");
+
+    return isValid;
+  } catch (error) {
+    console.error("Ed25519 diagnostic failed:", error.message);
+    return false;
+  }
+};
+
 const privateKeyPath =
   process.env.ED25519_PRIVATE_KEY_PATH ||
   path.join(
@@ -2114,4 +2148,6 @@ module.exports = {
   verifyPdfSignature,
 
   extractPdfSignature,
+
+  diagnoseEd25519Keys,
 };
