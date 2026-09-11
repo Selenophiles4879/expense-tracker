@@ -221,10 +221,6 @@ const exportVerificationSchema =
 // =========================================================
 
 exportVerificationSchema.index({
-  verificationId: 1,
-});
-
-exportVerificationSchema.index({
   user: 1,
   exportType: 1,
   generatedAt: -1,
