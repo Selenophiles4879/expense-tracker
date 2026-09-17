@@ -30,7 +30,7 @@ export default function PublicNavbar() {
                 </div>
                 <div className="flex flex-shrink-0 items-center">
                   {/* Logo */}
-                  <img src="/logo.png" alt="Expense Tracker Logo"
+                  <img src="/10209.png" alt="Expense Tracker Logo"
                         className="h-10 w-10 rounded-full object-contain" />
                   {/* <SiAuthy className="h-8 w-auto text-green-500" />*/}
                 </div>
