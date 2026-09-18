@@ -585,19 +585,35 @@ const usersController = {
       </p>
     `;
 
-    try {
+  try {
+  const emailResult = await sendEmail({
+    to: user.email,
+    subject: "Your Password Reset Request",
+    emailType: "password_reset",
+    userId: user._id.toString(),
+    htmlContent: htmlMessage,
+  });
 
-      await sendEmail({
-        to: user.email,
-        subject: "Your Password Reset Request",
-        htmlContent: htmlMessage,
-      });
+  // Save email tracking information
+  user.emailDelivery = {
+    provider: emailResult.provider,
+    messageId: emailResult.messageId,
+    type: "password_reset",
+    status: "sent",
+    sentAt: new Date(),
+  };
 
-      return res.json({
-        message:
-          "If your email is registered, you will receive a reset link.",
-      });
+  user.passwordResetLastSentAt = new Date();
 
+  await user.save({
+    validateBeforeSave: false,
+  });
+
+  return res.json({
+    message:
+      "If your email is registered, you will receive a reset link.",
+  });
+    
     } catch (err) {
 
       user.passwordResetToken = undefined;
@@ -611,15 +627,139 @@ const usersController = {
         "Error sending reset email:",
         err
       );
-
       res.status(500);
-
       throw new Error(
         "There was an error sending the email. Try again later."
       );
     }
   }),
 
+  // =======================================================
+// RESEND PASSWORD RESET EMAIL
+// =======================================================
+resendPasswordReset: asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    res.status(400);
+    throw new Error("Please provide an email address");
+  }
+
+  const user = await User.findOne({ email });
+
+  // Do not reveal whether the email exists
+  if (!user) {
+    return res.json({
+      message:
+        "If your email is registered, you will receive a reset link.",
+    });
+  }
+
+  // Three-minute cooldown
+  const COOLDOWN_MS = 3 * 60 * 1000;
+
+  if (
+    user.passwordResetLastSentAt &&
+    Date.now() - user.passwordResetLastSentAt.getTime() < COOLDOWN_MS
+  ) {
+    const remainingSeconds = Math.ceil(
+      (COOLDOWN_MS -
+        (Date.now() - user.passwordResetLastSentAt.getTime())) /
+        1000
+    );
+
+    return res.status(429).json({
+      message: "Please wait before requesting another reset email.",
+      retryAfterSeconds: remainingSeconds,
+    });
+  }
+
+  // Generate a fresh reset token
+  const resetToken = user.createPasswordResetToken();
+
+  await user.save({
+    validateBeforeSave: false,
+  });
+
+  const resetURL = `${process.env.FRONTEND_URL}/users/reset-password/${resetToken}`;
+
+  const htmlMessage = `
+    <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#333;">
+      <p>Hi <strong>${user.username}</strong>,</p>
+
+      <p>Here is your new password reset link for your Expense Tracker account.</p>
+
+      <p>This link will expire in <strong>10 minutes</strong>.</p>
+
+      <div style="text-align:center;margin:30px 0;">
+        <a
+          href="${resetURL}"
+          style="
+            background-color:#4CAF50;
+            color:white;
+            padding:12px 25px;
+            text-decoration:none;
+            border-radius:5px;
+            font-weight:bold;
+            display:inline-block;
+          "
+        >
+          Reset Password
+        </a>
+      </div>
+
+      <p>If you did not request this email, you can safely ignore it.</p>
+
+      <p>
+        Thanks,<br />
+        Expense Tracker Team
+      </p>
+    </div>
+  `;
+
+  try {
+    const emailResult = await sendEmail({
+      to: user.email,
+      subject: "Your New Password Reset Link",
+      emailType: "password_reset",
+      userId: user._id.toString(),
+      htmlContent: htmlMessage,
+    });
+
+    user.emailDelivery = {
+      provider: emailResult.provider,
+      messageId: emailResult.messageId,
+      type: "password_reset",
+      status: "sent",
+      sentAt: new Date(),
+    };
+
+    user.passwordResetLastSentAt = new Date();
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    return res.json({
+      message: "A new password reset email has been sent.",
+      retryAfterSeconds: 180,
+    });
+  } catch (error) {
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+
+    await user.save({
+      validateBeforeSave: false,
+    });
+
+    console.error("Resend password reset email failed:", error);
+
+    res.status(500);
+    throw new Error(
+      "There was an error sending the reset email. Please try again later."
+    );
+  }
+}),
 
   // =======================================================
   // RESET PASSWORD
@@ -713,7 +853,122 @@ const usersController = {
         "Password changed successfully",
     });
   }),
+
+  // =======================================================
+// EMAIL DELIVERY STATUS
+// =======================================================
+emailStatus: asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+
+  const user = await User.findOne(
+    {
+      "emailDelivery.messageId": messageId,
+    },
+    {
+      emailDelivery: 1,
+      _id: 0,
+    }
+  );
+
+  if (!user) {
+    res.status(404);
+    throw new Error("Email status not found");
+  }
+
+  res.json({
+    emailDelivery: user.emailDelivery,
+  });
+}),
+
+  // =======================================================
+// BREVO EMAIL WEBHOOK
+// =======================================================
+const brevoEmailWebhook = asyncHandler(async (req, res) => {
+  const authHeader = req.headers.authorization || "";
+
+  const expectedAuth = process.env.BREVO_WEBHOOK_SECRET
+    ? `Bearer ${process.env.BREVO_WEBHOOK_SECRET}`
+    : "";
+
+  if (!expectedAuth || authHeader !== expectedAuth) {
+    return res.status(401).send("Unauthorized");
+  }
+
+  const payload = req.body || {};
+
+  const event = payload.event;
+  const messageId = payload["message-id"] || payload.messageId;
+
+  // Always acknowledge events without a message ID
+  if (!messageId) {
+    return res.sendStatus(200);
+  }
+
+  const eventTime = payload.ts_event
+    ? new Date(Number(payload.ts_event) * 1000)
+    : payload.ts_epoch
+      ? new Date(Number(payload.ts_epoch))
+      : new Date();
+
+  const update = {};
+
+  switch (event) {
+    case "request":
+    case "sent":
+      update["emailDelivery.status"] = "sent";
+      update["emailDelivery.sentAt"] = eventTime;
+      break;
+
+    case "delivered":
+      update["emailDelivery.status"] = "delivered";
+      update["emailDelivery.deliveredAt"] = eventTime;
+      break;
+
+    case "deferred":
+      update["emailDelivery.status"] = "delayed";
+      update["emailDelivery.delayedAt"] = eventTime;
+      break;
+
+    case "opened":
+    case "uniqueOpened":
+      update["emailDelivery.status"] = "opened";
+      update["emailDelivery.openedAt"] = eventTime;
+      break;
+
+    case "click":
+      update["emailDelivery.status"] = "clicked";
+      update["emailDelivery.clickedAt"] = eventTime;
+      break;
+
+    case "softBounce":
+    case "hardBounce":
+    case "blocked":
+    case "invalid":
+    case "spam":
+      update["emailDelivery.status"] = "failed";
+      update["emailDelivery.bouncedAt"] = eventTime;
+      update["emailDelivery.error"] =
+        payload.reason || payload.error || event;
+      break;
+
+    default:
+      return res.sendStatus(200);
+  }
+
+  await User.updateOne(
+    {
+      "emailDelivery.messageId": messageId,
+    },
+    {
+      $set: update,
+    }
+  );
+
+  return res.sendStatus(200);
+});
 };
 
-
-module.exports = usersController;
+module.exports = {
+  ...usersController,
+  brevoEmailWebhook,
+};
