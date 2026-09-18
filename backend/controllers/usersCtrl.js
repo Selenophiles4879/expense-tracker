@@ -6,6 +6,57 @@ const { sendEmail } = require("../utils/sendEmail");
 const crypto = require("crypto");
 
 // ---------------------------------------------------------
+// NORMALIZATION + VALIDATION HELPERS
+// ---------------------------------------------------------
+//
+// Usernames and emails are stored lowercase and trimmed so
+// that "Alice", "alice" and " alice " can never become three
+// separate accounts, and so lookups are case-insensitive.
+//
+// IMPORTANT:
+// Every place that LOOKS UP a user by email must normalize
+// the same way, otherwise an account registered as
+// "User@x.com" (stored "user@x.com") would not be found when
+// the person later types "User@x.com" at login or on the
+// forgot-password form.
+//
+
+const normalizeEmail = (email) => {
+  return String(email || "").trim().toLowerCase();
+};
+
+
+const normalizeUsername = (username) => {
+  return String(username || "").trim().toLowerCase();
+};
+
+
+/*
+ * Throws a 400 for an invalid username.
+ *
+ * `res` is passed in so the status code is set the same way
+ * the rest of this controller does it (res.status + throw,
+ * handled by express-async-handler).
+ */
+const assertValidUsername = (res, normalizedUsername) => {
+  if (!/^[a-zA-Z0-9_]+$/.test(normalizedUsername)) {
+    res.status(400);
+    throw new Error(
+      "Username can only contain letters, numbers, and underscores"
+    );
+  }
+
+  if (
+    normalizedUsername.length < 3 ||
+    normalizedUsername.length > 30
+  ) {
+    res.status(400);
+    throw new Error("Username must be between 3 and 30 characters");
+  }
+};
+
+
+// ---------------------------------------------------------
 // SEND EMAIL VERIFICATION
 // ---------------------------------------------------------
 const sendVerificationEmail = async (user, subject = "Verify your email address") => {
@@ -94,9 +145,22 @@ const usersController = {
     }
 
     // -----------------------------------------------------
+    // NORMALIZE INPUT
+    // -----------------------------------------------------
+    const normalizedUsername = normalizeUsername(username);
+    const normalizedEmail = normalizeEmail(email);
+
+    // -----------------------------------------------------
+    // VALIDATE USERNAME
+    // -----------------------------------------------------
+    assertValidUsername(res, normalizedUsername);
+
+    // -----------------------------------------------------
     // CHECK EXISTING EMAIL
     // -----------------------------------------------------
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
 
@@ -157,7 +221,9 @@ const usersController = {
     // -----------------------------------------------------
     // CHECK USERNAME
     // -----------------------------------------------------
-    const existingUsername = await User.findOne({ username });
+    const existingUsername = await User.findOne({
+      username: normalizedUsername,
+    });
 
     if (existingUsername) {
       res.status(409);
@@ -170,8 +236,8 @@ const usersController = {
     const hashed = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      username,
-      email,
+      username: normalizedUsername,
+      email: normalizedEmail,
       password: hashed,
       isEmailVerified: false,
     });
@@ -255,7 +321,14 @@ const usersController = {
 
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    // -----------------------------------------------------
+    // NORMALIZE INPUT
+    // -----------------------------------------------------
+    const normalizedEmail = normalizeEmail(email);
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
 
     // -----------------------------------------------------
     // USER NOT FOUND
@@ -263,7 +336,7 @@ const usersController = {
     if (!user) {
       res.status(404);
       throw new Error(
-        "User not found. Please register yourself."
+        "User not found. Please check your email."
       );
     }
 
@@ -388,11 +461,29 @@ const usersController = {
     }
 
     // -----------------------------------------------------
+    // NORMALIZE INPUT
+    //
+    // Both are optional on this endpoint, so they stay
+    // undefined when not supplied and the matching block
+    // below is skipped.
+    // -----------------------------------------------------
+    const normalizedEmail = email
+      ? normalizeEmail(email)
+      : undefined;
+
+    const normalizedUsername = username
+      ? normalizeUsername(username)
+      : undefined;
+
+    // -----------------------------------------------------
     // EMAIL CHANGE
     // -----------------------------------------------------
-    if (email && email !== user.email) {
+    if (normalizedEmail && normalizedEmail !== user.email) {
 
-      const emailExists = await User.findOne({ email });
+      const emailExists = await User.findOne({
+        email: normalizedEmail,
+        _id: { $ne: user._id },
+      });
 
       if (emailExists) {
         res.status(409);
@@ -401,7 +492,7 @@ const usersController = {
         );
       }
 
-      user.email = email;
+      user.email = normalizedEmail;
       user.isEmailVerified = false;
 
       // Generate new verification token
@@ -415,7 +506,7 @@ const usersController = {
         `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
 
       await sendEmail({
-        to: email,
+        to: normalizedEmail,
         subject: "Verify your new email",
         htmlContent: `
           <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#333;">
@@ -468,20 +559,26 @@ const usersController = {
     // -----------------------------------------------------
     // USERNAME CHANGE
     // -----------------------------------------------------
-    if (username && username !== user.username) {
+    if (normalizedUsername) {
 
-      const usernameExists = await User.findOne({
-        username,
-      });
+      assertValidUsername(res, normalizedUsername);
 
-      if (usernameExists) {
-        res.status(409);
-        throw new Error(
-          "This username is already taken by another user."
-        );
+      if (normalizedUsername !== user.username) {
+
+        const usernameExists = await User.findOne({
+          username: normalizedUsername,
+          _id: { $ne: user._id },
+        });
+
+        if (usernameExists) {
+          res.status(409);
+          throw new Error(
+            "This username is already taken."
+          );
+        }
+
+        user.username = normalizedUsername;
       }
-
-      user.username = username;
     }
 
     const updatedUser = await user.save();
@@ -512,7 +609,14 @@ const usersController = {
       );
     }
 
-    const user = await User.findOne({ email });
+    // Normalized so a user who registered as "User@x.com"
+    // (stored lowercase) is still found when they type it
+    // back with different casing or stray whitespace.
+    const normalizedEmail = normalizeEmail(email);
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
 
     // Security: don't reveal whether email exists
     if (!user) {
@@ -646,7 +750,11 @@ const usersController = {
       throw new Error("Please provide an email address");
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = normalizeEmail(email);
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+    });
 
     // Do not reveal whether the email exists
     if (!user) {
