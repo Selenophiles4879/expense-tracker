@@ -17,6 +17,8 @@ userRouter.post("/users/login", usersController.login);
 // --- ADD THESE NEW ROUTES ---
 userRouter.post("/users/forgot-password", usersController.forgotPassword);
 userRouter.put("/users/reset-password/:token", usersController.resetPassword);
+router.post("/users/resend-password-reset", usersController.resendPasswordReset);
+router.get("/users/email-status/:messageId", usersController.emailStatus);
 
 // PROFILE
 userRouter.get("/users/profile", isAuthenticated, usersController.profile);
