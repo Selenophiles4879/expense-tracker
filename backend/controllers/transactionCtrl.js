@@ -1,6 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const Transaction = require("../model/Transaction");
 
+const MAX_DESCRIPTION_LENGTH = 100;
+
 const transactionController = {
   //! CREATE TRANSACTION
   create: asyncHandler(async (req, res) => {
@@ -13,9 +15,22 @@ const transactionController = {
       items = [],
     } = req.body;
 
+    // Validate required fields
     if (!type || !amount || !date) {
       res.status(400);
       throw new Error("Type, amount, and date are required");
+    }
+
+    // Validate description length
+    if (
+      description !== undefined &&
+      description !== null &&
+      String(description).length > MAX_DESCRIPTION_LENGTH
+    ) {
+      res.status(400);
+      throw new Error(
+        `Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters`
+      );
     }
 
     const transaction = await Transaction.create({
@@ -83,10 +98,22 @@ const transactionController = {
       items = [],
     } = req.body;
 
+    // Validate description length
+    if (
+      description !== undefined &&
+      description !== null &&
+      String(description).length > MAX_DESCRIPTION_LENGTH
+    ) {
+      res.status(400);
+      throw new Error(
+        `Description cannot exceed ${MAX_DESCRIPTION_LENGTH} characters`
+      );
+    }
+
     // IMPORTANT:
     // Transaction must match BOTH:
-    // 1. transaction _id
-    // 2. logged-in user's id
+    // 1. Transaction _id
+    // 2. Logged-in user's id
     const updatedTransaction = await Transaction.findOneAndUpdate(
       {
         _id: id,
@@ -122,8 +149,8 @@ const transactionController = {
 
     // IMPORTANT:
     // Transaction must match BOTH:
-    // 1. transaction _id
-    // 2. logged-in user's id
+    // 1. Transaction _id
+    // 2. Logged-in user's id
     const deletedTransaction = await Transaction.findOneAndDelete({
       _id: id,
       user: req.user.id,
