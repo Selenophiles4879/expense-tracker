@@ -11,6 +11,19 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
 
+      // Custom service worker (src/sw.js) so we can add
+      // Background Sync replay of the offline request queue,
+      // sharing utils/offlineQueue.js with the page itself.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+
+      injectManifest: {
+        globPatterns: [
+          '**/*.{js,css,html,ico,png,svg,woff2}'
+        ]
+      },
+
       includeAssets: [
         'favicon-16x16.png',
         'favicon-32x32.png',
@@ -51,15 +64,11 @@ export default defineConfig({
             purpose: 'any'
           }
         ]
-      },
-
-      workbox: {
-        cleanupOutdatedCaches: true,
-
-        globPatterns: [
-          '**/*.{js,css,html,ico,png,svg,woff2}'
-        ]
       }
+
+      // NOTE: with strategies: 'injectManifest', precaching /
+      // cleanupOutdatedCaches / runtime routing are configured
+      // directly in src/sw.js instead of via a `workbox` block.
     })
   ],
 
