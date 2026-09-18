@@ -20,7 +20,7 @@ export default defineConfig({
       manifest: {
         id: '/',
         name: 'Expense Tracker',
-        short_name: 'ExpTracker',
+        short_name: 'Expense Tracker',
         description:
           'Manage your income, expenses, and financial records securely.',
 
