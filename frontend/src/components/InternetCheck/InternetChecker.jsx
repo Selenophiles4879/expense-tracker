@@ -5,27 +5,20 @@ import {
   useState,
 } from "react";
 
+import { isStandalonePWA as detectStandaloneMode } from "../../utils/pwaMode";
+import { setConnected as reportConnectivity } from "../../utils/networkManager";
+import NetworkStatusIndicator from "../NetworkStatus/NetworkStatusIndicator";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 const CHECK_INTERVAL = 15000; // 15 seconds
 const REQUEST_TIMEOUT = 8000; // 8 seconds
 
-// ========================================
-// DETECT STANDALONE PWA MODE
-// ========================================
-
-const detectStandaloneMode = () => {
-  // Standard PWA detection (Chrome, Edge, Android, etc.)
-  const standaloneMediaQuery = window.matchMedia(
-    "(display-mode: standalone)"
-  ).matches;
-
-  // iOS Safari standalone detection
-  const iosStandalone =
-    window.navigator.standalone === true;
-
-  return standaloneMediaQuery || iosStandalone;
-};
+// A single slow/timed-out health check shouldn't immediately
+// flip the UI to "not connected" - require this many consecutive
+// failures first so a transient timeout doesn't cause a flash of
+// the offline screen.
+const FAILURE_THRESHOLD = 2;
 
 // ========================================
 // INTERNET CHECKER COMPONENT
@@ -41,9 +34,38 @@ const InternetChecker = ({ children }) => {
   const [isConnected, setIsConnected] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
 
+  // Whether the very first connectivity check (on mount) has
+  // finished. `isConnected` defaults to true so we don't flash
+  // an "offline" state before we've checked anything - but that
+  // means we can't use `isConnected` to decide whether to show
+  // the initial loading screen. This flag is the real signal.
+  const [hasCheckedOnce, setHasCheckedOnce] = useState(false);
+
   // References
   const isMounted = useRef(true);
   const checkingRef = useRef(false);
+  const consecutiveFailures = useRef(0);
+
+  // Update local state + the shared network manager together, and
+  // require a few consecutive failures before reporting "offline"
+  // so a single transient timeout doesn't flash the offline screen.
+  const applyConnectionResult = useCallback((ok) => {
+    if (ok) {
+      consecutiveFailures.current = 0;
+    } else {
+      consecutiveFailures.current += 1;
+
+      if (consecutiveFailures.current < FAILURE_THRESHOLD) {
+        return;
+      }
+    }
+
+    if (isMounted.current) {
+      setIsConnected(ok);
+    }
+
+    reportConnectivity(ok);
+  }, []);
 
   // ========================================
   // DETECT DISPLAY MODE CHANGES
@@ -105,11 +127,12 @@ const InternetChecker = ({ children }) => {
     let timeoutId;
 
     try {
-      // Check device network status
+      // Check device network status. This is a definitive signal
+      // (not a fluky timeout), so report it immediately rather
+      // than waiting on the failure threshold.
       if (!navigator.onLine) {
-        if (isMounted.current) {
-          setIsConnected(false);
-        }
+        consecutiveFailures.current = FAILURE_THRESHOLD;
+        applyConnectionResult(false);
 
         return false;
       }
@@ -120,9 +143,8 @@ const InternetChecker = ({ children }) => {
           "VITE_API_URL is not configured."
         );
 
-        if (isMounted.current) {
-          setIsConnected(false);
-        }
+        consecutiveFailures.current = FAILURE_THRESHOLD;
+        applyConnectionResult(false);
 
         return false;
       }
@@ -144,9 +166,7 @@ const InternetChecker = ({ children }) => {
         }
       );
 
-      if (isMounted.current) {
-        setIsConnected(response.ok);
-      }
+      applyConnectionResult(response.ok);
 
       return response.ok;
     } catch (error) {
@@ -157,9 +177,9 @@ const InternetChecker = ({ children }) => {
         );
       }
 
-      if (isMounted.current) {
-        setIsConnected(false);
-      }
+      // Includes timeouts (AbortError) - these go through the
+      // failure threshold instead of failing instantly.
+      applyConnectionResult(false);
 
       return false;
     } finally {
@@ -169,7 +189,7 @@ const InternetChecker = ({ children }) => {
 
       checkingRef.current = false;
     }
-  }, [isStandalone]);
+  }, [isStandalone, applyConnectionResult]);
 
   // ========================================
   // INITIAL CONNECTION CHECK
@@ -182,6 +202,7 @@ const InternetChecker = ({ children }) => {
     if (!isStandalone) {
       setIsConnected(true);
       setIsChecking(false);
+      setHasCheckedOnce(true);
 
       return () => {
         isMounted.current = false;
@@ -195,6 +216,7 @@ const InternetChecker = ({ children }) => {
 
       if (isMounted.current) {
         setIsChecking(false);
+        setHasCheckedOnce(true);
       }
     };
 
@@ -220,9 +242,10 @@ const InternetChecker = ({ children }) => {
     };
 
     const handleOffline = () => {
-      if (isMounted.current) {
-        setIsConnected(false);
-      }
+      // The browser's own 'offline' event is a definitive
+      // signal, so report it immediately.
+      consecutiveFailures.current = FAILURE_THRESHOLD;
+      applyConnectionResult(false);
     };
 
     window.addEventListener("online", handleOnline);
@@ -266,10 +289,18 @@ const InternetChecker = ({ children }) => {
 
     const connected = await checkConnection();
 
+    // A manual retry click should reflect the result right away,
+    // regardless of the automatic failure threshold.
+    consecutiveFailures.current = connected
+      ? 0
+      : FAILURE_THRESHOLD;
+
     if (isMounted.current) {
       setIsConnected(connected);
       setIsChecking(false);
     }
+
+    reportConnectivity(connected);
   };
 
   // ========================================
@@ -285,7 +316,7 @@ const InternetChecker = ({ children }) => {
   // INITIAL LOADING SCREEN
   // ========================================
 
-  if (isChecking && !isConnected) {
+  if (!hasCheckedOnce) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-950 px-6 text-white">
         <div className="text-center">
@@ -371,7 +402,12 @@ const InternetChecker = ({ children }) => {
   // RENDER APPLICATION
   // ========================================
 
-  return children;
+  return (
+    <>
+      {children}
+      <NetworkStatusIndicator />
+    </>
+  );
 };
 
 export default InternetChecker;
