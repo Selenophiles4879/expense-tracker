@@ -1,11 +1,65 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(),tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+
+    VitePWA({
+      registerType: 'autoUpdate',
+
+      includeAssets: [
+        'favicon-16x16.png',
+        'favicon-32x32.png',
+        'apple-touch-icon.png'
+      ],
+
+      manifest: {
+        id: '/',
+        name: 'Expense Tracker',
+        short_name: 'Expenses',
+        description:
+          'Manage your income, expenses, and financial records securely.',
+
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+
+        background_color: '#000000',
+        theme_color: '#06152f',
+
+        icons: [
+          {
+            src: '/icons/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/icons/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/icons/icon-master-1024.png',
+            sizes: '1024x1024',
+            type: 'image/png',
+            purpose: 'any'
+          }
+        ]
+      },
+
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}']
+      }
+    })
+  ],
+
   build: {
-    outDir: 'build', // <--- ADD THIS LINE
+    outDir: 'build'
   }
 })
