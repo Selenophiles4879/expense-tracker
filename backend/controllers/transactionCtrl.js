@@ -33,6 +33,36 @@ const transactionController = {
       );
     }
 
+    // -----------------------------------------------------
+    // IDEMPOTENCY (offline queue support)
+    // -----------------------------------------------------
+    //
+    // The PWA's offline queue may replay a "create transaction"
+    // request more than once - e.g. the original request actually
+    // reached the server, but the connection dropped before the
+    // client saw the response, so it gets queued and retried too.
+    //
+    // When the client supplies an Idempotency-Key, return the
+    // already-created transaction instead of creating a duplicate.
+    //
+    // NOTE: this requires an `idempotencyKey` field on the
+    // Transaction model, e.g.:
+    //
+    //   idempotencyKey: { type: String, index: true, sparse: true }
+    //
+    const idempotencyKey = req.header("Idempotency-Key");
+
+    if (idempotencyKey) {
+      const existingTransaction = await Transaction.findOne({
+        user: req.user.id,
+        idempotencyKey,
+      });
+
+      if (existingTransaction) {
+        return res.status(200).json(existingTransaction);
+      }
+    }
+
     const transaction = await Transaction.create({
       user: req.user.id,
       type,
@@ -41,6 +71,7 @@ const transactionController = {
       date,
       description,
       items: type === "expense" ? items : [],
+      ...(idempotencyKey ? { idempotencyKey } : {}),
     });
 
     res.status(201).json(transaction);
