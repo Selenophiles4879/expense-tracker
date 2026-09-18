@@ -59,72 +59,54 @@ const assertValidUsername = (res, normalizedUsername) => {
 // ---------------------------------------------------------
 // SEND EMAIL VERIFICATION
 // ---------------------------------------------------------
-const sendVerificationEmail = async (user, subject = "Verify your email address") => {
+const saveEmailDelivery = async (user, emailType, emailResult) => {
+  user.set(`emailDelivery.${emailType}`, {
+    provider: emailResult.provider,
+    messageId: emailResult.messageId,
+    status: "sent",
+    sentAt: new Date(),
+  });
+
+  await user.save({ validateBeforeSave: false });
+};
+
+const sendVerificationEmail = async (
+  user,
+  subject = "Verify your email address"
+) => {
   const verifyToken = user.createEmailVerificationToken();
 
   await user.save({ validateBeforeSave: false });
 
   const verifyURL = `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
 
-  await sendEmail({
+  const emailResult = await sendEmail({
     to: user.email,
     subject,
+    emailType: "email_verification",
+    userId: user._id.toString(),
     htmlContent: `
       <div style="font-family: Arial, sans-serif; font-size:16px; line-height:1.5; color:#333;">
-
-        <p>
-          Hi <strong>${user.username}</strong>,
-        </p>
-
-        <p>
-          We received a request to verify your Email for your Expense Tracker account.
-        </p>
-
-        <p>
-          Please click the button below to verify your Email.
-          This link will expire in <strong>10 minutes</strong>.
-        </p>
-
+        <p>Hi <strong>${user.username}</strong>,</p>
+        <p>We received a request to verify your Email for your Expense Tracker account.</p>
+        <p>Please click the button below to verify your Email. This link will expire in <strong>10 minutes</strong>.</p>
         <div style="text-align:center; margin:30px 0;">
-          <a
-            href="${verifyURL}"
-            style="
-              background-color:#4CAF50;
-              color:white;
-              padding:12px 25px;
-              text-decoration:none;
-              border-radius:5px;
-              font-weight:bold;
-              font-family:Arial, sans-serif;
-              display:inline-block;
-              min-width:150px;
-              width:80%;
-              max-width:250px;
-              box-sizing:border-box;
-            "
-          >
+          <a href="${verifyURL}" style="background-color:#4CAF50;color:white;padding:12px 25px;text-decoration:none;border-radius:5px;font-weight:bold;font-family:Arial,sans-serif;display:inline-block;min-width:150px;width:80%;max-width:250px;box-sizing:border-box;">
             Verify Email
           </a>
         </div>
-
-        <p>
-          If you are not trying to verify your Email for your Expense Tracker
-          account, you can safely ignore this email.
-        </p>
-
-        <p style="font-size:14px; line-height:1.6; color:#b71c1c;">
-          This is a secure message. Please do not share this link with anyone.
-          The link will expire after one use.
-        </p>
-
-        <p>
-          Thanks,<br/>
-          Expense Tracker Team
-        </p>
-
+        <p>If you are not trying to verify your Email for your Expense Tracker account, you can safely ignore this email.</p>
+        <p style="font-size:14px;line-height:1.6;color:#b71c1c;">This is a secure message. Please do not share this link with anyone. The link will expire after one use.</p>
+        <p>Thanks,<br/>Expense Tracker Team</p>
       </div>
     `,
   });
+
+  await saveEmailDelivery(user, "email_verification", emailResult);
+  user.emailVerificationLastSentAt = new Date();
+  await user.save({ validateBeforeSave: false });
+
+  return emailResult;
 };
 
 
@@ -505,9 +487,11 @@ const usersController = {
       const verifyURL =
         `${process.env.FRONTEND_URL}/verify-email/${verifyToken}`;
 
-      await sendEmail({
+      const emailResult = await sendEmail({
         to: normalizedEmail,
         subject: "Verify your new email",
+        emailType: "email_verification",
+        userId: user._id.toString(),
         htmlContent: `
           <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#333;">
 
@@ -554,6 +538,9 @@ const usersController = {
           </div>
         `,
       });
+
+      await saveEmailDelivery(user, "email_verification", emailResult);
+      user.emailVerificationLastSentAt = new Date();
     }
 
     // -----------------------------------------------------
@@ -699,13 +686,7 @@ const usersController = {
       });
 
       // Save email tracking information
-      user.emailDelivery = {
-        provider: emailResult.provider,
-        messageId: emailResult.messageId,
-        type: "password_reset",
-        status: "sent",
-        sentAt: new Date(),
-      };
+      await saveEmailDelivery(user, "password_reset", emailResult);
 
       user.passwordResetLastSentAt = new Date();
 
@@ -835,13 +816,7 @@ const usersController = {
         htmlContent: htmlMessage,
       });
 
-      user.emailDelivery = {
-        provider: emailResult.provider,
-        messageId: emailResult.messageId,
-        type: "password_reset",
-        status: "sent",
-        sentAt: new Date(),
-      };
+      await saveEmailDelivery(user, "password_reset", emailResult);
 
       user.passwordResetLastSentAt = new Date();
 
@@ -973,7 +948,11 @@ const usersController = {
 
     const user = await User.findOne(
       {
-        "emailDelivery.messageId": messageId,
+        $or: [
+          { "emailDelivery.email_verification.messageId": messageId },
+          { "emailDelivery.password_reset.messageId": messageId },
+          { "emailDelivery.transactional.messageId": messageId },
+        ],
       },
       {
         emailDelivery: 1,
@@ -1032,34 +1011,59 @@ const brevoEmailWebhook = asyncHandler(async (req, res) => {
       ? new Date(Number(payload.ts_epoch))
       : new Date();
 
+  const deliveryTypes = [
+    "email_verification",
+    "password_reset",
+    "transactional",
+  ];
+
+  const user = await User.findOne({
+    $or: deliveryTypes.map((type) => ({
+      [`emailDelivery.${type}.messageId`]: messageId,
+    })),
+  });
+
+  if (!user) {
+    return res.sendStatus(200);
+  }
+
+  const emailType = deliveryTypes.find(
+    (type) => user.emailDelivery?.[type]?.messageId === messageId
+  );
+
+  if (!emailType) {
+    return res.sendStatus(200);
+  }
+
   const update = {};
+  const prefix = `emailDelivery.${emailType}`;
 
   switch (event) {
     case "request":
     case "sent":
-      update["emailDelivery.status"] = "sent";
-      update["emailDelivery.sentAt"] = eventTime;
+      update[`${prefix}.status`] = "sent";
+      update[`${prefix}.sentAt`] = eventTime;
       break;
 
     case "delivered":
-      update["emailDelivery.status"] = "delivered";
-      update["emailDelivery.deliveredAt"] = eventTime;
+      update[`${prefix}.status`] = "delivered";
+      update[`${prefix}.deliveredAt`] = eventTime;
       break;
 
     case "deferred":
-      update["emailDelivery.status"] = "delayed";
-      update["emailDelivery.delayedAt"] = eventTime;
+      update[`${prefix}.status`] = "delayed";
+      update[`${prefix}.delayedAt`] = eventTime;
       break;
 
     case "opened":
     case "uniqueOpened":
-      update["emailDelivery.status"] = "opened";
-      update["emailDelivery.openedAt"] = eventTime;
+      update[`${prefix}.status`] = "opened";
+      update[`${prefix}.openedAt`] = eventTime;
       break;
 
     case "click":
-      update["emailDelivery.status"] = "clicked";
-      update["emailDelivery.clickedAt"] = eventTime;
+      update[`${prefix}.status`] = "clicked";
+      update[`${prefix}.clickedAt`] = eventTime;
       break;
 
     case "softBounce":
@@ -1067,10 +1071,11 @@ const brevoEmailWebhook = asyncHandler(async (req, res) => {
     case "blocked":
     case "invalid":
     case "spam":
-      update["emailDelivery.status"] = "failed";
-      update["emailDelivery.bouncedAt"] = eventTime;
-      update["emailDelivery.error"] =
-        payload.reason || payload.error || event;
+      update[`${prefix}.status`] = event === "softBounce" || event === "hardBounce"
+        ? "bounced"
+        : "failed";
+      update[`${prefix}.bouncedAt`] = eventTime;
+      update[`${prefix}.error`] = payload.reason || payload.error || event;
       break;
 
     default:
@@ -1078,12 +1083,8 @@ const brevoEmailWebhook = asyncHandler(async (req, res) => {
   }
 
   await User.updateOne(
-    {
-      "emailDelivery.messageId": messageId,
-    },
-    {
-      $set: update,
-    }
+    { _id: user._id },
+    { $set: update }
   );
 
   return res.sendStatus(200);
