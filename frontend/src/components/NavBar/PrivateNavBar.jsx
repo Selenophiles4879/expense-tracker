@@ -100,7 +100,11 @@ export default function PrivateNavbar() {
 
                 {/* Logo */}
                 <div className="flex flex-shrink-0 items-center transition-transform duration-300 hover:scale-105">
-                  <SiAuthy className="h-8 w-auto text-green-500" />
+                  <img
+                    src="/icons/icon-master-1024.png"
+                    alt="Expense Tracker Logo"
+                    className="h-10 w-10 rounded-full object-contain"
+                  />
                 </div>
 
                 {/* Expense Tracker link */}
