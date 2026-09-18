@@ -585,35 +585,35 @@ const usersController = {
       </p>
     `;
 
-  try {
-  const emailResult = await sendEmail({
-    to: user.email,
-    subject: "Your Password Reset Request",
-    emailType: "password_reset",
-    userId: user._id.toString(),
-    htmlContent: htmlMessage,
-  });
+    try {
+      const emailResult = await sendEmail({
+        to: user.email,
+        subject: "Your Password Reset Request",
+        emailType: "password_reset",
+        userId: user._id.toString(),
+        htmlContent: htmlMessage,
+      });
 
-  // Save email tracking information
-  user.emailDelivery = {
-    provider: emailResult.provider,
-    messageId: emailResult.messageId,
-    type: "password_reset",
-    status: "sent",
-    sentAt: new Date(),
-  };
+      // Save email tracking information
+      user.emailDelivery = {
+        provider: emailResult.provider,
+        messageId: emailResult.messageId,
+        type: "password_reset",
+        status: "sent",
+        sentAt: new Date(),
+      };
 
-  user.passwordResetLastSentAt = new Date();
+      user.passwordResetLastSentAt = new Date();
 
-  await user.save({
-    validateBeforeSave: false,
-  });
+      await user.save({
+        validateBeforeSave: false,
+      });
 
-  return res.json({
-    message:
-      "If your email is registered, you will receive a reset link.",
-  });
-    
+      return res.json({
+        message:
+          "If your email is registered, you will receive a reset link.",
+      });
+
     } catch (err) {
 
       user.passwordResetToken = undefined;
@@ -634,132 +634,134 @@ const usersController = {
     }
   }),
 
+
   // =======================================================
-// RESEND PASSWORD RESET EMAIL
-// =======================================================
-resendPasswordReset: asyncHandler(async (req, res) => {
-  const { email } = req.body;
+  // RESEND PASSWORD RESET EMAIL
+  // =======================================================
+  resendPasswordReset: asyncHandler(async (req, res) => {
+    const { email } = req.body;
 
-  if (!email) {
-    res.status(400);
-    throw new Error("Please provide an email address");
-  }
+    if (!email) {
+      res.status(400);
+      throw new Error("Please provide an email address");
+    }
 
-  const user = await User.findOne({ email });
+    const user = await User.findOne({ email });
 
-  // Do not reveal whether the email exists
-  if (!user) {
-    return res.json({
-      message:
-        "If your email is registered, you will receive a reset link.",
+    // Do not reveal whether the email exists
+    if (!user) {
+      return res.json({
+        message:
+          "If your email is registered, you will receive a reset link.",
+      });
+    }
+
+    // Three-minute cooldown
+    const COOLDOWN_MS = 3 * 60 * 1000;
+
+    if (
+      user.passwordResetLastSentAt &&
+      Date.now() - user.passwordResetLastSentAt.getTime() < COOLDOWN_MS
+    ) {
+      const remainingSeconds = Math.ceil(
+        (COOLDOWN_MS -
+          (Date.now() - user.passwordResetLastSentAt.getTime())) /
+          1000
+      );
+
+      return res.status(429).json({
+        message: "Please wait before requesting another reset email.",
+        retryAfterSeconds: remainingSeconds,
+      });
+    }
+
+    // Generate a fresh reset token
+    const resetToken = user.createPasswordResetToken();
+
+    await user.save({
+      validateBeforeSave: false,
     });
-  }
 
-  // Three-minute cooldown
-  const COOLDOWN_MS = 3 * 60 * 1000;
+    const resetURL = `${process.env.FRONTEND_URL}/users/reset-password/${resetToken}`;
 
-  if (
-    user.passwordResetLastSentAt &&
-    Date.now() - user.passwordResetLastSentAt.getTime() < COOLDOWN_MS
-  ) {
-    const remainingSeconds = Math.ceil(
-      (COOLDOWN_MS -
-        (Date.now() - user.passwordResetLastSentAt.getTime())) /
-        1000
-    );
+    const htmlMessage = `
+      <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#333;">
+        <p>Hi <strong>${user.username}</strong>,</p>
 
-    return res.status(429).json({
-      message: "Please wait before requesting another reset email.",
-      retryAfterSeconds: remainingSeconds,
-    });
-  }
+        <p>Here is your new password reset link for your Expense Tracker account.</p>
 
-  // Generate a fresh reset token
-  const resetToken = user.createPasswordResetToken();
+        <p>This link will expire in <strong>10 minutes</strong>.</p>
 
-  await user.save({
-    validateBeforeSave: false,
-  });
+        <div style="text-align:center;margin:30px 0;">
+          <a
+            href="${resetURL}"
+            style="
+              background-color:#4CAF50;
+              color:white;
+              padding:12px 25px;
+              text-decoration:none;
+              border-radius:5px;
+              font-weight:bold;
+              display:inline-block;
+            "
+          >
+            Reset Password
+          </a>
+        </div>
 
-  const resetURL = `${process.env.FRONTEND_URL}/users/reset-password/${resetToken}`;
+        <p>If you did not request this email, you can safely ignore it.</p>
 
-  const htmlMessage = `
-    <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#333;">
-      <p>Hi <strong>${user.username}</strong>,</p>
-
-      <p>Here is your new password reset link for your Expense Tracker account.</p>
-
-      <p>This link will expire in <strong>10 minutes</strong>.</p>
-
-      <div style="text-align:center;margin:30px 0;">
-        <a
-          href="${resetURL}"
-          style="
-            background-color:#4CAF50;
-            color:white;
-            padding:12px 25px;
-            text-decoration:none;
-            border-radius:5px;
-            font-weight:bold;
-            display:inline-block;
-          "
-        >
-          Reset Password
-        </a>
+        <p>
+          Thanks,<br />
+          Expense Tracker Team
+        </p>
       </div>
+    `;
 
-      <p>If you did not request this email, you can safely ignore it.</p>
+    try {
+      const emailResult = await sendEmail({
+        to: user.email,
+        subject: "Your New Password Reset Link",
+        emailType: "password_reset",
+        userId: user._id.toString(),
+        htmlContent: htmlMessage,
+      });
 
-      <p>
-        Thanks,<br />
-        Expense Tracker Team
-      </p>
-    </div>
-  `;
+      user.emailDelivery = {
+        provider: emailResult.provider,
+        messageId: emailResult.messageId,
+        type: "password_reset",
+        status: "sent",
+        sentAt: new Date(),
+      };
 
-  try {
-    const emailResult = await sendEmail({
-      to: user.email,
-      subject: "Your New Password Reset Link",
-      emailType: "password_reset",
-      userId: user._id.toString(),
-      htmlContent: htmlMessage,
-    });
+      user.passwordResetLastSentAt = new Date();
 
-    user.emailDelivery = {
-      provider: emailResult.provider,
-      messageId: emailResult.messageId,
-      type: "password_reset",
-      status: "sent",
-      sentAt: new Date(),
-    };
+      await user.save({
+        validateBeforeSave: false,
+      });
 
-    user.passwordResetLastSentAt = new Date();
+      return res.json({
+        message: "A new password reset email has been sent.",
+        retryAfterSeconds: 180,
+      });
+    } catch (error) {
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
 
-    await user.save({
-      validateBeforeSave: false,
-    });
+      await user.save({
+        validateBeforeSave: false,
+      });
 
-    return res.json({
-      message: "A new password reset email has been sent.",
-      retryAfterSeconds: 180,
-    });
-  } catch (error) {
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
+      console.error("Resend password reset email failed:", error);
 
-    await user.save({
-      validateBeforeSave: false,
-    });
+      res.status(500);
+      throw new Error(
+        "There was an error sending the reset email. Please try again later."
+      );
+    }
+  }),
 
-    console.error("Resend password reset email failed:", error);
-
-    res.status(500);
-    throw new Error(
-      "There was an error sending the reset email. Please try again later."
-    );
-  }
-}),
 
   // =======================================================
   // RESET PASSWORD
@@ -854,35 +856,47 @@ resendPasswordReset: asyncHandler(async (req, res) => {
     });
   }),
 
-  // =======================================================
-// EMAIL DELIVERY STATUS
-// =======================================================
-emailStatus: asyncHandler(async (req, res) => {
-  const { messageId } = req.params;
 
-  const user = await User.findOne(
-    {
-      "emailDelivery.messageId": messageId,
-    },
-    {
-      emailDelivery: 1,
-      _id: 0,
+  // =======================================================
+  // EMAIL DELIVERY STATUS
+  // =======================================================
+  emailStatus: asyncHandler(async (req, res) => {
+    const { messageId } = req.params;
+
+    const user = await User.findOne(
+      {
+        "emailDelivery.messageId": messageId,
+      },
+      {
+        emailDelivery: 1,
+        _id: 0,
+      }
+    );
+
+    if (!user) {
+      res.status(404);
+      throw new Error("Email status not found");
     }
-  );
 
-  if (!user) {
-    res.status(404);
-    throw new Error("Email status not found");
-  }
+    res.json({
+      emailDelivery: user.emailDelivery,
+    });
+  }),
 
-  res.json({
-    emailDelivery: user.emailDelivery,
-  });
-}),
+};
 
-  // =======================================================
+
+// =========================================================
 // BREVO EMAIL WEBHOOK
-// =======================================================
+// =========================================================
+//
+// NOTE:
+// This is declared OUTSIDE the usersController object.
+//
+// A `const` declaration cannot live inside an object
+// literal — doing so is a SyntaxError and prevents the
+// whole module from being required.
+//
 const brevoEmailWebhook = asyncHandler(async (req, res) => {
   const authHeader = req.headers.authorization || "";
 
@@ -966,7 +980,11 @@ const brevoEmailWebhook = asyncHandler(async (req, res) => {
 
   return res.sendStatus(200);
 });
-};
+
+
+// =========================================================
+// EXPORT
+// =========================================================
 
 module.exports = {
   ...usersController,
