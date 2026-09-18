@@ -44,6 +44,18 @@ app.post(
   brevoEmailWebhook
 );
 
+// ========================================
+// SERVER HEALTH CHECK
+// ========================================
+
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Expense Tracker API is running",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 //! Routes
 app.use("/api/v1", userRouter);
 app.use("/api/v1", categoryRouter);
