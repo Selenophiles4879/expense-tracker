@@ -81,7 +81,7 @@ const LoginForm = () => {
 
         dispatch(loginAction(payload));
 
-        navigate("/profile");
+        navigate("/");
       } catch (e) {
         console.error("Login Submission Error:", e);
       }
