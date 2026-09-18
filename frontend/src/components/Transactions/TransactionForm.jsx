@@ -619,12 +619,14 @@ const TransactionForm = () => {
           placeholder="Description"
           rows="3"
           className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+          maxLength={100}
         />
 
         {formik.touched.description &&
           formik.errors.description && (
             <p className="text-red-500 text-xs">
               {formik.errors.description}
+              {formData.description.length}/100 characters
             </p>
           )}
       </div>
