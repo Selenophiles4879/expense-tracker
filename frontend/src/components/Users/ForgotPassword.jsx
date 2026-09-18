@@ -21,11 +21,18 @@ const ForgotPassword = () => {
   const [resendMessage, setResendMessage] = useState("");
   const [resendError, setResendError] = useState("");
 
-  const { mutateAsync, isPending, isError, error, isSuccess, data } =
-    useMutation({
-      mutationFn: forgotPasswordAPI,
-      mutationKey: ["forgot-password"],
-    });
+  const {
+    mutateAsync,
+    isPending,
+    isError,
+    error,
+    isSuccess,
+    data,
+    reset,
+  } = useMutation({
+    mutationFn: forgotPasswordAPI,
+    mutationKey: ["forgot-password"],
+  });
 
   const formik = useFormik({
     initialValues: {
@@ -40,7 +47,7 @@ const ForgotPassword = () => {
         await mutateAsync(values.email);
         setResendSeconds(RESEND_COOLDOWN);
       } catch {
-        // React Query already exposes the error through isError and error.
+        // Error is handled through React Query.
       }
     },
   });
@@ -99,6 +106,13 @@ const ForgotPassword = () => {
     }
   };
 
+  const handleTryAgain = () => {
+    reset();
+    setResendMessage("");
+    setResendError("");
+    setResendSeconds(0);
+  };
+
   return (
     <form
       onSubmit={formik.handleSubmit}
@@ -113,18 +127,25 @@ const ForgotPassword = () => {
         password.
       </p>
 
-      {/* Status messages */}
       {isPending && (
         <AlertMessage type="loading" message="Sending reset email..." />
       )}
 
       {isError && (
-        <AlertMessage
-          type="error"
-          message={
-            error?.response?.data?.message || "An error occurred"
-          }
-        />
+        <>
+          <AlertMessage
+            type="error"
+            message={error?.response?.data?.message || "An error occurred"}
+          />
+
+          <button
+            type="button"
+            onClick={handleTryAgain}
+            className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md"
+          >
+            Try Again
+          </button>
+        </>
       )}
 
       {isSuccess && (
@@ -134,13 +155,14 @@ const ForgotPassword = () => {
         />
       )}
 
-      {!isSuccess && (
+      {!isSuccess && !isError && (
         <>
           <div className="relative">
             <FaEnvelope className="absolute top-3 left-3 text-gray-400" />
 
             <input
               id="email"
+              name="email"
               type="email"
               {...formik.getFieldProps("email")}
               placeholder="Email"
@@ -164,7 +186,6 @@ const ForgotPassword = () => {
         </>
       )}
 
-      {/* Resend reset email section */}
       {isSuccess && (
         <div className="space-y-3 text-center">
           <p className="text-sm text-gray-600">
@@ -188,6 +209,14 @@ const ForgotPassword = () => {
             {resendSeconds > 0
               ? `Resend available in ${formatTime(resendSeconds)}`
               : "Resend reset email"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleTryAgain}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Use another email address
           </button>
         </div>
       )}
