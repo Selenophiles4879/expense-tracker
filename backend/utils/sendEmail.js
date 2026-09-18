@@ -1,32 +1,111 @@
 // utils/sendEmail.js
 const brevo = require("@getbrevo/brevo");
 
-const sendEmail = async ({to, subject, htmlContent}) => {
-  try {
-    const apiInstance = new brevo.TransactionalEmailsApi();
-    apiInstance.setApiKey(
-      brevo.TransactionalEmailsApiApiKeys.apiKey,
-      process.env.BREVO_API_KEY
-    );
+const sendWithBrevo = async ({
+  apiKey,
+  fromEmail,
+  to,
+  subject,
+  htmlContent,
+  emailType,
+  userId,
+  providerName,
+}) => {
+  const apiInstance = new brevo.TransactionalEmailsApi();
 
-    const sendSmtpEmail = new brevo.SendSmtpEmail();
-    sendSmtpEmail.subject = subject;
-    sendSmtpEmail.htmlContent = htmlContent;
-    sendSmtpEmail.sender = { email: process.env.FROM_EMAIL, name: "Expense Tracker" };
-    sendSmtpEmail.to = [{ email: to }];
+  apiInstance.setApiKey(
+    brevo.TransactionalEmailsApiApiKeys.apiKey,
+    apiKey
+  );
 
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
-  } catch (err) {
-     console.error("========== BREVO EMAIL ERROR ==========");
-     console.error("Status:", err?.response?.status);
-     console.error("Body:", err?.response?.body);
-     console.error("Message:", err?.message);
-     console.error("Full error:", err);
-     console.error("=======================================");
+  const sendSmtpEmail = new brevo.SendSmtpEmail();
 
-    //console.error("Email sending failed:", err);
-    throw new Error("Email could not be sent. Please try again later.");
-  }
+  sendSmtpEmail.subject = subject;
+  sendSmtpEmail.htmlContent = htmlContent;
+
+  sendSmtpEmail.sender = {
+    email: fromEmail,
+    name: "Expense Tracker",
+  };
+
+  sendSmtpEmail.to = [{ email: to }];
+
+  // Used by Brevo for webhook correlation
+  sendSmtpEmail.tags = [
+    `email_type:${emailType}`,
+    ...(userId ? [`user_id:${String(userId)}`] : []),
+  ];
+
+  sendSmtpEmail.headers = {
+    "X-Mailin-custom": [
+      `email_type:${emailType}`,
+      `user_id:${userId || ""}`,
+    ].join("|"),
+  };
+
+  const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+
+  return {
+    provider: providerName,
+    messageId: result?.messageId || result?.body?.messageId,
+  };
 };
 
-module.exports = {sendEmail};
+const sendEmail = async ({
+  to,
+  subject,
+  htmlContent,
+  emailType = "transactional",
+  userId,
+}) => {
+  const providers = [
+    {
+      apiKey: process.env.BREVO_API_KEY,
+      fromEmail: process.env.FROM_EMAIL,
+      providerName: "brevo-primary",
+    },
+    {
+      apiKey: process.env.BREVO_FALLBACK_API_KEY,
+      fromEmail:
+        process.env.BREVO_FALLBACK_FROM_EMAIL ||
+        process.env.FROM_EMAIL,
+      providerName: "brevo-fallback",
+    },
+  ].filter((provider) => provider.apiKey && provider.fromEmail);
+
+  if (providers.length === 0) {
+    throw new Error("No Brevo email provider is configured.");
+  }
+
+  let lastError;
+
+  for (const provider of providers) {
+    try {
+      const result = await sendWithBrevo({
+        ...provider,
+        to,
+        subject,
+        htmlContent,
+        emailType,
+        userId,
+      });
+
+      console.log(`Email sent through ${provider.providerName}`);
+
+      return result;
+    } catch (error) {
+      lastError = error;
+
+      console.error(
+        `${provider.providerName} failed:`,
+        error?.message || error
+      );
+    }
+  }
+
+  console.error("All Brevo email providers failed:", lastError);
+
+  throw new Error("Email could not be sent. Please try again later.");
+};
+
+module.exports = { sendEmail };
