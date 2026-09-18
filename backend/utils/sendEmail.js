@@ -1,4 +1,3 @@
-// utils/sendEmail.js
 const brevo = require("@getbrevo/brevo");
 
 const sendWithBrevo = async ({
@@ -22,15 +21,12 @@ const sendWithBrevo = async ({
 
   sendSmtpEmail.subject = subject;
   sendSmtpEmail.htmlContent = htmlContent;
-
   sendSmtpEmail.sender = {
     email: fromEmail,
     name: "Expense Tracker",
   };
-
   sendSmtpEmail.to = [{ email: to }];
 
-  // Used by Brevo for webhook correlation
   sendSmtpEmail.tags = [
     `email_type:${emailType}`,
     ...(userId ? [`user_id:${String(userId)}`] : []),
@@ -67,8 +63,7 @@ const sendEmail = async ({
     {
       apiKey: process.env.BREVO_FALLBACK_API_KEY,
       fromEmail:
-        process.env.BREVO_FALLBACK_FROM_EMAIL ||
-        process.env.FROM_EMAIL,
+        process.env.BREVO_FALLBACK_FROM_EMAIL || process.env.FROM_EMAIL,
       providerName: "brevo-fallback",
     },
   ].filter((provider) => provider.apiKey && provider.fromEmail);
@@ -91,11 +86,9 @@ const sendEmail = async ({
       });
 
       console.log(`Email sent through ${provider.providerName}`);
-
       return result;
     } catch (error) {
       lastError = error;
-
       console.error(
         `${provider.providerName} failed:`,
         error?.message || error
@@ -104,7 +97,6 @@ const sendEmail = async ({
   }
 
   console.error("All Brevo email providers failed:", lastError);
-
   throw new Error("Email could not be sent. Please try again later.");
 };
 
