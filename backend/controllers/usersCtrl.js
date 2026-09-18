@@ -336,7 +336,7 @@ const usersController = {
     if (!user) {
       res.status(404);
       throw new Error(
-        "User not found. Please check your email."
+        "User not found. Please register yourself."
       );
     }
 
