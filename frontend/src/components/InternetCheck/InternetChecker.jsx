@@ -1,30 +1,111 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const CHECK_INTERVAL = 15000; // 15 seconds
+const REQUEST_TIMEOUT = 8000; // 8 seconds
+
+// ========================================
+// DETECT STANDALONE PWA MODE
+// ========================================
+
+const detectStandaloneMode = () => {
+  // Standard PWA detection (Chrome, Edge, Android, etc.)
+  const standaloneMediaQuery = window.matchMedia(
+    "(display-mode: standalone)"
+  ).matches;
+
+  // iOS Safari standalone detection
+  const iosStandalone =
+    window.navigator.standalone === true;
+
+  return standaloneMediaQuery || iosStandalone;
+};
+
+// ========================================
+// INTERNET CHECKER COMPONENT
+// ========================================
 
 const InternetChecker = ({ children }) => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
+  // Detect whether the app is running as an installed PWA
+  const [isStandalone, setIsStandalone] = useState(
+    detectStandaloneMode
+  );
 
+  // Connection states
+  const [isConnected, setIsConnected] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
+
+  // References
   const isMounted = useRef(true);
   const checkingRef = useRef(false);
+
+  // ========================================
+  // DETECT DISPLAY MODE CHANGES
+  // ========================================
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(
+      "(display-mode: standalone)"
+    );
+
+    const handleDisplayModeChange = () => {
+      setIsStandalone(
+        mediaQuery.matches ||
+          window.navigator.standalone === true
+      );
+    };
+
+    // Listen for display-mode changes
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener(
+        "change",
+        handleDisplayModeChange
+      );
+    } else {
+      // Compatibility with older browsers
+      mediaQuery.addListener(handleDisplayModeChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener(
+          "change",
+          handleDisplayModeChange
+        );
+      } else {
+        mediaQuery.removeListener(handleDisplayModeChange);
+      }
+    };
+  }, []);
 
   // ========================================
   // CHECK BACKEND CONNECTION
   // ========================================
 
   const checkConnection = useCallback(async () => {
-    // Prevent multiple simultaneous requests
+    // Do not check the internet in a normal browser
+    if (!isStandalone) {
+      return true;
+    }
+
+    // Prevent duplicate requests
     if (checkingRef.current) {
       return false;
     }
 
     checkingRef.current = true;
 
+    let controller;
+    let timeoutId;
+
     try {
-      // First check browser network status
+      // Check device network status
       if (!navigator.onLine) {
         if (isMounted.current) {
           setIsConnected(false);
@@ -33,9 +114,11 @@ const InternetChecker = ({ children }) => {
         return false;
       }
 
-      // Ensure API URL is configured
+      // Check API URL configuration
       if (!API_URL) {
-        console.error("VITE_API_URL is not configured.");
+        console.error(
+          "VITE_API_URL is not configured."
+        );
 
         if (isMounted.current) {
           setIsConnected(false);
@@ -44,31 +127,34 @@ const InternetChecker = ({ children }) => {
         return false;
       }
 
-      // Abort request if server takes too long
-      const controller = new AbortController();
+      // Create request timeout controller
+      controller = new AbortController();
 
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         controller.abort();
-      }, 8000);
+      }, REQUEST_TIMEOUT);
 
-      try {
-        const response = await fetch(`${API_URL}/health`, {
+      // Check backend health endpoint
+      const response = await fetch(
+        `${API_URL}/health`,
+        {
           method: "GET",
           cache: "no-store",
           signal: controller.signal,
-        });
-
-        if (isMounted.current) {
-          setIsConnected(response.ok);
         }
+      );
 
-        return response.ok;
-      } finally {
-        clearTimeout(timeoutId);
+      if (isMounted.current) {
+        setIsConnected(response.ok);
       }
+
+      return response.ok;
     } catch (error) {
       if (error.name !== "AbortError") {
-        console.warn("Connection check failed:", error.message);
+        console.warn(
+          "Connection check failed:",
+          error.message
+        );
       }
 
       if (isMounted.current) {
@@ -77,16 +163,30 @@ const InternetChecker = ({ children }) => {
 
       return false;
     } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
       checkingRef.current = false;
     }
-  }, []);
+  }, [isStandalone]);
 
   // ========================================
-  // INITIAL CHECK
+  // INITIAL CONNECTION CHECK
   // ========================================
 
   useEffect(() => {
     isMounted.current = true;
+
+    // Bypass connection check in a normal browser
+    if (!isStandalone) {
+      setIsConnected(true);
+      setIsChecking(false);
+
+      return () => {
+        isMounted.current = false;
+      };
+    }
 
     const initialCheck = async () => {
       setIsChecking(true);
@@ -103,19 +203,26 @@ const InternetChecker = ({ children }) => {
     return () => {
       isMounted.current = false;
     };
-  }, [checkConnection]);
+  }, [isStandalone, checkConnection]);
 
   // ========================================
   // MONITOR NETWORK STATUS
   // ========================================
 
   useEffect(() => {
+    // No monitoring in normal browser mode
+    if (!isStandalone) {
+      return;
+    }
+
     const handleOnline = () => {
       checkConnection();
     };
 
     const handleOffline = () => {
-      setIsConnected(false);
+      if (isMounted.current) {
+        setIsConnected(false);
+      }
     };
 
     window.addEventListener("online", handleOnline);
@@ -125,13 +232,18 @@ const InternetChecker = ({ children }) => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [checkConnection]);
+  }, [isStandalone, checkConnection]);
 
   // ========================================
   // PERIODIC BACKEND CHECK
   // ========================================
 
   useEffect(() => {
+    // Do not run the interval in browser mode
+    if (!isStandalone) {
+      return;
+    }
+
     const interval = setInterval(() => {
       checkConnection();
     }, CHECK_INTERVAL);
@@ -139,13 +251,17 @@ const InternetChecker = ({ children }) => {
     return () => {
       clearInterval(interval);
     };
-  }, [checkConnection]);
+  }, [isStandalone, checkConnection]);
 
   // ========================================
-  // RETRY BUTTON HANDLER
+  // RETRY BUTTON
   // ========================================
 
   const handleRetry = async () => {
+    if (!isStandalone) {
+      return;
+    }
+
     setIsChecking(true);
 
     const connected = await checkConnection();
@@ -155,6 +271,15 @@ const InternetChecker = ({ children }) => {
       setIsChecking(false);
     }
   };
+
+  // ========================================
+  // NORMAL BROWSER MODE
+  // ========================================
+
+  // No internet check, no loading screen, no blocking
+  if (!isStandalone) {
+    return children;
+  }
 
   // ========================================
   // INITIAL LOADING SCREEN
@@ -185,7 +310,7 @@ const InternetChecker = ({ children }) => {
   if (!isConnected) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-950 px-6 text-white">
-        <div className="w-full max-w-md text-center">
+        <div className="w-full max-w-md px-4 text-center">
 
           {/* ICON */}
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-500/10">
@@ -228,14 +353,15 @@ const InternetChecker = ({ children }) => {
             disabled={isChecking}
             className="mt-8 rounded-xl bg-blue-600 px-7 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isChecking ? "Checking..." : "Retry Connection"}
+            {isChecking
+              ? "Checking..."
+              : "Retry Connection"}
           </button>
 
           {/* HINT */}
           <p className="mt-5 text-xs text-gray-600">
             Check your Wi-Fi or mobile data connection.
           </p>
-
         </div>
       </div>
     );
