@@ -1,8 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useMutation } from "@tanstack/react-query";
-import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
+
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+} from "react-icons/fa";
+
+import {
+  FiEye,
+  FiEyeOff,
+} from "react-icons/fi";
+
 import { IoReloadCircleOutline } from "react-icons/io5";
 
 import { registerAPI } from "../../services/users/userService";
@@ -16,6 +27,8 @@ import AlertMessage from "../Alert/AlertMessage";
 const validationSchema = Yup.object({
 
   username: Yup.string()
+    .trim()
+    .max(30, "Username cannot exceed 30 characters")
     .required("Username is required"),
 
   email: Yup.string()
@@ -23,10 +36,7 @@ const validationSchema = Yup.object({
     .required("Email is required"),
 
   password: Yup.string()
-    .min(
-      6,
-      "Password must be at least 6 characters long"
-    )
+    .min(6, "Password must be at least 6 characters long")
     .required("Password is required"),
 
   confirmPassword: Yup.string()
@@ -34,9 +44,7 @@ const validationSchema = Yup.object({
       [Yup.ref("password"), null],
       "Passwords must match"
     )
-    .required(
-      "Confirming your password is required"
-    ),
+    .required("Confirming your password is required"),
 
 });
 
@@ -47,6 +55,13 @@ const validationSchema = Yup.object({
 
 const RegistrationForm = () => {
 
+  // Password visibility states
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
+
   const {
     mutateAsync,
     isPending,
@@ -56,7 +71,6 @@ const RegistrationForm = () => {
   } = useMutation({
 
     mutationFn: registerAPI,
-
     mutationKey: ["register"],
 
   });
@@ -83,7 +97,7 @@ const RegistrationForm = () => {
 
           email: values.email,
           password: values.password,
-          username: values.username,
+          username: values.username.trim(),
 
         });
 
@@ -95,6 +109,7 @@ const RegistrationForm = () => {
         );
 
       }
+
     },
 
   });
@@ -112,9 +127,7 @@ const RegistrationForm = () => {
       </h2>
 
 
-      {/* -------------------------------------------------
-          LOADING
-      -------------------------------------------------- */}
+      {/* LOADING */}
 
       {isPending && (
 
@@ -126,9 +139,7 @@ const RegistrationForm = () => {
       )}
 
 
-      {/* -------------------------------------------------
-          ERROR
-      -------------------------------------------------- */}
+      {/* ERROR */}
 
       {isError && (
 
@@ -143,17 +154,13 @@ const RegistrationForm = () => {
       )}
 
 
-      {/* -------------------------------------------------
-          SUCCESS
-      -------------------------------------------------- */}
+      {/* SUCCESS */}
 
       {isSuccess && (
 
         <AlertMessage
           type="success"
-          message={
-            "Registration successful. Please check your email to verify your account."
-          }
+          message="Registration successful. Please check your email to verify your account."
         />
 
       )}
@@ -164,9 +171,7 @@ const RegistrationForm = () => {
       </p>
 
 
-      {/* -------------------------------------------------
-          USERNAME
-      -------------------------------------------------- */}
+      {/* USERNAME */}
 
       <div className="relative">
 
@@ -179,9 +184,17 @@ const RegistrationForm = () => {
           type="text"
           {...formik.getFieldProps("username")}
           placeholder="Username"
+          maxLength={30}
           disabled={isPending}
           className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
         />
+
+        {/* CHARACTER COUNTER */}
+
+        <div className="text-right text-xs text-gray-500 mt-1">
+          {formik.values.username.length}/30
+        </div>
+
 
         {formik.touched.username &&
           formik.errors.username && (
@@ -195,9 +208,7 @@ const RegistrationForm = () => {
       </div>
 
 
-      {/* -------------------------------------------------
-          EMAIL
-      -------------------------------------------------- */}
+      {/* EMAIL */}
 
       <div className="relative">
 
@@ -226,9 +237,7 @@ const RegistrationForm = () => {
       </div>
 
 
-      {/* -------------------------------------------------
-          PASSWORD
-      -------------------------------------------------- */}
+      {/* PASSWORD */}
 
       <div className="relative">
 
@@ -238,12 +247,35 @@ const RegistrationForm = () => {
 
         <input
           id="password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           {...formik.getFieldProps("password")}
           placeholder="Password"
           disabled={isPending}
-          className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+          className="pl-10 pr-12 py-2 w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
         />
+
+        {/* SHOW / HIDE BUTTON */}
+
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          disabled={isPending}
+          aria-label={
+            showPassword
+              ? "Hide password"
+              : "Show password"
+          }
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500"
+        >
+
+          {showPassword ? (
+            <FiEyeOff size={20} />
+          ) : (
+            <FiEye size={20} />
+          )}
+
+        </button>
+
 
         {formik.touched.password &&
           formik.errors.password && (
@@ -257,9 +289,7 @@ const RegistrationForm = () => {
       </div>
 
 
-      {/* -------------------------------------------------
-          CONFIRM PASSWORD
-      -------------------------------------------------- */}
+      {/* CONFIRM PASSWORD */}
 
       <div className="relative">
 
@@ -269,14 +299,41 @@ const RegistrationForm = () => {
 
         <input
           id="confirmPassword"
-          type="password"
-          {...formik.getFieldProps(
-            "confirmPassword"
-          )}
+          type={
+            showConfirmPassword
+              ? "text"
+              : "password"
+          }
+          {...formik.getFieldProps("confirmPassword")}
           placeholder="Confirm Password"
           disabled={isPending}
-          className="pl-10 pr-4 py-2 w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+          className="pl-10 pr-12 py-2 w-full rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500"
         />
+
+        {/* SHOW / HIDE BUTTON */}
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowConfirmPassword(!showConfirmPassword)
+          }
+          disabled={isPending}
+          aria-label={
+            showConfirmPassword
+              ? "Hide confirm password"
+              : "Show confirm password"
+          }
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500"
+        >
+
+          {showConfirmPassword ? (
+            <FiEyeOff size={20} />
+          ) : (
+            <FiEye size={20} />
+          )}
+
+        </button>
+
 
         {formik.touched.confirmPassword &&
           formik.errors.confirmPassword && (
@@ -290,9 +347,7 @@ const RegistrationForm = () => {
       </div>
 
 
-      {/* -------------------------------------------------
-          REGISTER BUTTON
-      -------------------------------------------------- */}
+      {/* REGISTER BUTTON */}
 
       <button
         type="submit"
@@ -313,23 +368,21 @@ const RegistrationForm = () => {
               className="h-5 w-5 animate-spin"
             />
 
-            <span>
-              Creating account...
-            </span>
+            <span>Creating account...</span>
           </>
 
         ) : (
 
-          <span>
-            Register
-          </span>
+          <span>Register</span>
 
         )}
 
       </button>
 
     </form>
+
   );
+
 };
 
 
