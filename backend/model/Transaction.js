@@ -50,6 +50,17 @@ const transactionSchema = new mongoose.Schema(
         },
       },
     ],
+
+    // Set only on requests carrying an Idempotency-Key header
+    // (i.e. creates that may have been replayed by the PWA's
+    // offline queue). Without this field, Mongoose's default
+    // strict mode silently drops the key on save and
+    // transactionCtrl.js's dedupe lookup never matches anything.
+    idempotencyKey: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
   },
   {
     timestamps: true,

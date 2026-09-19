@@ -17,6 +17,16 @@ const categorySchema = new mongoose.Schema(
       required: true,
       enum: ["income", "expense"],
     },
+
+    // Set only on requests carrying an Idempotency-Key header
+    // (i.e. creates that may have been replayed by the PWA's
+    // offline queue). sparse so the unique-ish lookup in
+    // categoryCtrl.js only ever matches real keys.
+    idempotencyKey: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
   },
   {
     timestamps: true,
