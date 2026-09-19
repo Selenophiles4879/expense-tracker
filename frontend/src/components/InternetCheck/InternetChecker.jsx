@@ -9,7 +9,7 @@ import { isStandalonePWA as detectStandaloneMode } from "../../utils/pwaMode";
 import { setConnected as reportConnectivity } from "../../utils/networkManager";
 import NetworkStatusIndicator from "../NetworkStatus/NetworkStatusIndicator";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_BASE_URL;
 
 const CHECK_INTERVAL = 15000; // 15 seconds
 const REQUEST_TIMEOUT = 8000; // 8 seconds
