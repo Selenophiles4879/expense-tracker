@@ -14,6 +14,33 @@ const categoryController = {
 
     const normalizedName = name.toLowerCase();
 
+    // -----------------------------------------------------
+    // IDEMPOTENCY (offline queue support)
+    // -----------------------------------------------------
+    //
+    // Mirrors transactionCtrl.js: the PWA's offline queue may
+    // replay a "create category" request more than once - e.g.
+    // the original request actually reached the server, but the
+    // connection dropped before the client saw the response, so
+    // it gets queued and retried too.
+    //
+    // Checked BEFORE the duplicate-name check below, so a
+    // replay of a request that already succeeded returns the
+    // original category instead of hitting the "already exists"
+    // error.
+    const idempotencyKey = req.header("Idempotency-Key");
+
+    if (idempotencyKey) {
+      const existingByKey = await Category.findOne({
+        user: req.user.id,
+        idempotencyKey,
+      });
+
+      if (existingByKey) {
+        return res.status(200).json(existingByKey);
+      }
+    }
+
     // --- FIX 1: Check if the category already exists FOR THIS USER ---
     const categoryExists = await Category.findOne({
       name: normalizedName,
@@ -30,6 +57,7 @@ const categoryController = {
       name: normalizedName,
       type,
       user: req.user.id, // This was missing
+      ...(idempotencyKey ? { idempotencyKey } : {}),
     });
 
     res.status(201).json(category);
