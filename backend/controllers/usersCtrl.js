@@ -264,18 +264,21 @@ const usersController = {
       .update(req.params.token)
       .digest("hex");
 
-    const user = await User.findOneAndUpdate(
+    // Atomic one-time verification. The isEmailVerified: false
+    // guard means two concurrent requests for the same token
+    // can't both succeed - only one findOneAndUpdate actually
+    // flips the flag.
+    const verifiedUser = await User.findOneAndUpdate(
       {
         emailVerificationToken: hashedToken,
         emailVerificationExpires: {
           $gt: Date.now(),
         },
+        isEmailVerified: false,
       },
       {
         $set: {
           isEmailVerified: true,
-          emailVerificationToken: null,
-          emailVerificationExpires: null,
         },
       },
       {
@@ -283,16 +286,40 @@ const usersController = {
       }
     );
 
-    if (!user) {
-      res.status(400);
-      throw new Error(
-        "Verification link is invalid or expired"
-      );
+    if (verifiedUser) {
+      return res.json({
+        message: "Email verified successfully",
+      });
     }
 
-    res.json({
-      message: "Email verified successfully",
+    // No unverified user matched. Before treating this as an
+    // error, check whether the token belongs to a user who is
+    // ALREADY verified - this happens whenever the same link is
+    // hit more than once (an email security scanner "clicking"
+    // the link before the real user does, a double-click, or
+    // opening it from two devices). Respond the same way as a
+    // first-time success rather than erroring, since nothing
+    // about the outcome actually changes.
+    //
+    // NOTE: this relies on emailVerificationToken staying set
+    // after verification - it is intentionally no longer
+    // cleared to null here, so this lookup keeps working for
+    // any later repeat hit on the same link.
+    const alreadyVerifiedUser = await User.findOne({
+      emailVerificationToken: hashedToken,
+      isEmailVerified: true,
     });
+
+    if (alreadyVerifiedUser) {
+      return res.json({
+        message: "Email verified successfully",
+      });
+    }
+
+    res.status(400);
+    throw new Error(
+      "Verification link is invalid or expired"
+    );
   }),
 
 
