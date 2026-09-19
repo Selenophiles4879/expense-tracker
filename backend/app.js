@@ -28,8 +28,12 @@ mongoose.connection.once("open", () => {
 //! CORS configuration
 const corsOptions = {
   origin: process.env.FRONTEND_URL,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: [ "GET","POST","PUT","DELETE","PATCH","OPTIONS",],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Idempotency-Key",
+  ],
   credentials: true,
 };
 
