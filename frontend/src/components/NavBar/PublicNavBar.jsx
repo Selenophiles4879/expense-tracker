@@ -74,7 +74,7 @@ export default function PublicNavbar() {
                 <div className="flex flex-shrink-0 items-center">
 
                   <img
-                    src="/icons/icon-master-1024.png"
+                    src="/icons/icon-512.png"
                     alt="Expense Tracker Logo"
                     className="h-10 w-10 rounded-full object-contain"
                   />
