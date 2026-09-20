@@ -73,6 +73,8 @@ export default defineConfig({
   ],
 
   build: {
+    sourcemap: false,
+    minify: 'esbuild',
     outDir: 'build'
   }
 })
