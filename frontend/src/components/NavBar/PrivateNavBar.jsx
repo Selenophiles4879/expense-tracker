@@ -101,7 +101,7 @@ export default function PrivateNavbar() {
                 {/* Logo */}
                 <div className="flex flex-shrink-0 items-center transition-transform duration-300 hover:scale-105">
                   <img
-                    src="/icons/icon-512.png"
+                    src="/icons/icon-master-1024.png"
                     alt="Expense Tracker Logo"
                     className="h-10 w-10 rounded-full object-contain"
                   />
