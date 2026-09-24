@@ -15,6 +15,8 @@ import {
   logoutAction,
 } from "./redux/slice/authSlice";
 
+import NotFound from "./components/NotFound/NotFound";
+
 // =========================================================
 // PUBLIC
 // =========================================================
@@ -279,6 +281,14 @@ function AppContent() {
             </AuthRoute>
           }
         />
+
+        {/*============================
+                404 FALLBACK */}       
+        ===============================*/}
+          <Route
+            path="*"
+            element={<NotFound />}
+          />
 
       </Routes>
     </>
