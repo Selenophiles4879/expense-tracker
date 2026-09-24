@@ -8,7 +8,7 @@ const About = () => {
           
           {/* Photo */} 
           <div className="flex justify-center pt-10"> 
-            <img src="https://drive.google.com/thumbnail?id=1xnum2OjGLKZ61K2WTvTyEbwx3m2S1wc9&sz=w1000" 
+            <img src=" " 
               alt="Mrs. Seema Tiwari" 
               className=" h-72 w-72 rounded-2xl border-4 border-white object-cover shadow-xl dark:border-gray-800 sm:h-80 sm:w-80 " />
           </div>
