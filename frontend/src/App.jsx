@@ -27,7 +27,7 @@ import RegistrationForm from "./components/Users/Register";
 import ForgotPassword from "./components/Users/ForgotPassword";
 import ResetPassword from "./components/Users/ResetPassword";
 import VerifyEmail from "./components/Users/VerifyEmail";
-import Profile from "./components/About/Profile";
+import About from "./components/About/About";
 
 // =========================================================
 // PRIVATE
@@ -183,7 +183,7 @@ function AppContent() {
           element={<VerifyEmail />}
         />
 
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/about" element={<About />} />
 
         {/* ===============================================
             DOCUMENT VERIFICATION
