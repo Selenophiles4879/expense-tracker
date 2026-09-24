@@ -94,12 +94,12 @@ export default function PublicNavbar() {
                   </NavLink>
 
                   {/* About */}
-                  <NavLink
+                  {/*<NavLink
                     to="/about"
                     className={desktopLinkClasses}
                   >
                     About
-                  </NavLink>
+                  </NavLink>*/}
 
                 </div>
 
@@ -186,12 +186,12 @@ export default function PublicNavbar() {
               </NavLink>
 
               {/* About */}
-              <NavLink
+              {/*<NavLink
                 to="/about"
                 className={mobileLinkClasses}
               >
                 About
-              </NavLink>
+              </NavLink>*/}
 
               {/* Register */}
               <NavLink
