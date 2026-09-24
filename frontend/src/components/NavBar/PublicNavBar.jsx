@@ -22,8 +22,8 @@ export default function PublicNavbar() {
          : "border-transparent text-gray-500 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
      }`;
 
-  // Expense Tracker active link styling
-  const expenseTrackerClasses = ({ isActive }) =>
+  // Desktop Expense Tracker / About active link styling
+  const desktopLinkClasses = ({ isActive }) =>
     `inline-flex items-center rounded-md px-3 py-2
      text-sm font-medium transition-all duration-200
      ${
@@ -81,28 +81,37 @@ export default function PublicNavbar() {
 
                 </div>
 
-                {/* Desktop Expense Tracker Link */}
-                <div className="hidden md:ml-6 md:flex md:items-center">
+                {/* Desktop Navigation */}
+                <div className="hidden md:ml-6 md:flex md:items-center md:gap-1">
 
+                  {/* Expense Tracker */}
                   <NavLink
                     to="/"
                     end
-                    className={expenseTrackerClasses}
+                    className={desktopLinkClasses}
                   >
                     Expense Tracker
+                  </NavLink>
+
+                  {/* About */}
+                  <NavLink
+                    to="/profile"
+                    className={desktopLinkClasses}
+                  >
+                    Profile
                   </NavLink>
 
                 </div>
 
               </div>
 
-              {/* RIGHT SECTION - ORIGINAL BUTTONS */}
+              {/* RIGHT SECTION */}
 
               <div className="flex items-center">
 
                 <div className="flex-shrink-0">
 
-                  {/* REGISTER BUTTON - ORIGINAL */}
+                  {/* REGISTER BUTTON */}
                   <NavLink
                     to="/register"
                     className="relative inline-flex items-center gap-x-1.5
@@ -119,7 +128,7 @@ export default function PublicNavbar() {
                     Register
                   </NavLink>
 
-                  {/* LOGIN BUTTON - ANIMATION ONLY WHEN NOT ON LOGIN PAGE */}
+                  {/* LOGIN BUTTON */}
                   <NavLink
                     to="/login"
                     className={({ isActive }) =>
@@ -167,13 +176,21 @@ export default function PublicNavbar() {
 
             <div className="space-y-1 bg-white px-3 pb-3 pt-3">
 
-              {/* Expense Tracker - Active Highlight */}
+              {/* Expense Tracker */}
               <NavLink
                 to="/"
                 end
                 className={mobileLinkClasses}
               >
                 Expense Tracker
+              </NavLink>
+
+              {/* About */}
+              <NavLink
+                to="/profile"
+                className={mobileLinkClasses}
+              >
+                Profile
               </NavLink>
 
               {/* Register */}
