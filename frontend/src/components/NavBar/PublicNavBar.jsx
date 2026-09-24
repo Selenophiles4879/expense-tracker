@@ -95,10 +95,10 @@ export default function PublicNavbar() {
 
                   {/* About */}
                   <NavLink
-                    to="/profile"
+                    to="/about"
                     className={desktopLinkClasses}
                   >
-                    Profile
+                    About
                   </NavLink>
 
                 </div>
@@ -187,10 +187,10 @@ export default function PublicNavbar() {
 
               {/* About */}
               <NavLink
-                to="/profile"
+                to="/about"
                 className={mobileLinkClasses}
               >
-                Profile
+                About
               </NavLink>
 
               {/* Register */}
