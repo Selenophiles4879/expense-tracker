@@ -27,6 +27,7 @@ import RegistrationForm from "./components/Users/Register";
 import ForgotPassword from "./components/Users/ForgotPassword";
 import ResetPassword from "./components/Users/ResetPassword";
 import VerifyEmail from "./components/Users/VerifyEmail";
+import Profile from "./components/About/Profile";
 
 // =========================================================
 // PRIVATE
@@ -181,6 +182,8 @@ function AppContent() {
           path="/verify-email/:token"
           element={<VerifyEmail />}
         />
+
+        <Route path="/profile" element={<Profile />} />
 
         {/* ===============================================
             DOCUMENT VERIFICATION
