@@ -9,7 +9,7 @@ const About = () => {
           {/* Photo */}
           <div className="flex justify-center pt-10">
             <img
-              src=" .jpg"
+              src="https://drive.google.com/uc?export=view&id=1xnum2OjGLKZ61K2WTvTyEbwx3m2S1wc9"
               alt="Profile"
               className="h-40 w-40 rounded-full object-cover border-4 border-white shadow-md dark:border-gray-800"
             />
