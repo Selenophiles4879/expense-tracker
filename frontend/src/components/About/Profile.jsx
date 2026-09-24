@@ -1,6 +1,6 @@
 import React from "react";
 
-const Profile = () => {
+const About = () => {
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-12 dark:bg-gray-950">
       <div className="mx-auto max-w-4xl">
@@ -48,4 +48,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default About;
