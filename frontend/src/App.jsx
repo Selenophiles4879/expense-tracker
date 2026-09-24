@@ -183,7 +183,7 @@ function AppContent() {
           element={<VerifyEmail />}
         />
 
-        <Route path="/about" element={<About />} />
+        {/*<Route path="/about" element={<About />} />*/}
 
         {/* ===============================================
             DOCUMENT VERIFICATION
