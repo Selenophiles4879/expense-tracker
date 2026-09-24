@@ -9,23 +9,23 @@ const About = () => {
           {/* Photo */} 
           <div className="flex justify-center pt-10"> 
             <img src=" " 
-              alt="Mrs. Seema Tiwari" 
+              alt="" 
               className=" h-72 w-72 rounded-2xl border-4 border-white object-cover shadow-xl dark:border-gray-800 sm:h-80 sm:w-80 " />
           </div>
 
           {/* Details */}
           <div className="px-6 py-8 text-center">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Mrs. Seema Tiwari
+             
             </h1>
 
             <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-              My Mom.
+              
             </p>
 
             <p className="mx-auto mt-6 max-w-2xl leading-7 text-gray-600 dark:text-gray-300">
               Welcome to ExpenseTracker. This page contains some information
-              about my mummy.
+              about .
             </p>
 
             <div className="mx-auto mt-8 grid max-w-2xl gap-4 text-left sm:grid-cols-2">
@@ -34,7 +34,7 @@ const About = () => {
                   About
                 </h2>
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                 This is my loving and caring mummy.
+                 
                 </p>
               </div>
             </div>
